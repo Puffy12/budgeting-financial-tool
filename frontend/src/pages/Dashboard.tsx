@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { Line, Doughnut } from 'react-chartjs-2'
 import {
   Chart as ChartJS,
@@ -14,6 +15,7 @@ import {
   Filler,
 } from 'chart.js'
 import { useUser } from '../context/UserContext'
+import { useTheme } from '../context/ThemeContext'
 import { usersApi, transactionsApi } from '../api'
 import StatCard from '../components/StatCard'
 import type { Summary, ComparisonData, Transaction } from '../types'
@@ -32,6 +34,8 @@ ChartJS.register(
 
 export default function Dashboard() {
   const { currentUser } = useUser()
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const [summary, setSummary] = useState<Summary | null>(null)
   const [comparison, setComparison] = useState<ComparisonData[]>([])
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([])
@@ -67,7 +71,16 @@ export default function Dashboard() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const chartColors = {
+    income: '#10b981',
+    expense: '#ef4444',
+    grid: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+    text: isDark ? '#94a3b8' : '#64748b',
   }
 
   const lineChartData = {
@@ -76,18 +89,22 @@ export default function Dashboard() {
       {
         label: 'Income',
         data: comparison.map(c => c.income),
-        borderColor: '#10b981',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        borderColor: chartColors.income,
+        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
         fill: true,
         tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
       },
       {
         label: 'Expenses',
         data: comparison.map(c => c.expenses),
-        borderColor: '#ef4444',
-        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+        borderColor: chartColors.expense,
+        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
         fill: true,
         tension: 0.4,
+        pointRadius: 4,
+        pointHoverRadius: 6,
       },
     ],
   }
@@ -98,14 +115,21 @@ export default function Dashboard() {
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: { color: chartColors.text },
       },
     },
     scales: {
       y: {
         beginAtZero: true,
+        grid: { color: chartColors.grid },
         ticks: {
+          color: chartColors.text,
           callback: (value: number | string) => '$' + value,
         },
+      },
+      x: {
+        grid: { display: false },
+        ticks: { color: chartColors.text },
       },
     },
   }
@@ -119,21 +143,17 @@ export default function Dashboard() {
       expensesByCategory[categoryName] = (expensesByCategory[categoryName] || 0) + t.amount
     })
 
+  const pieColors = [
+    '#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6',
+    '#ec4899', '#06b6d4', '#84cc16',
+  ]
+
   const doughnutData = {
     labels: Object.keys(expensesByCategory),
     datasets: [
       {
         data: Object.values(expensesByCategory),
-        backgroundColor: [
-          '#10b981',
-          '#3b82f6',
-          '#f59e0b',
-          '#ef4444',
-          '#8b5cf6',
-          '#ec4899',
-          '#06b6d4',
-          '#84cc16',
-        ],
+        backgroundColor: pieColors,
         borderWidth: 0,
       },
     ],
@@ -145,6 +165,7 @@ export default function Dashboard() {
     plugins: {
       legend: {
         position: 'right' as const,
+        labels: { color: chartColors.text, boxWidth: 12, padding: 12 },
       },
     },
   }
@@ -158,46 +179,48 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-4 lg:p-8">
+    <div className="p-4 pb-24 lg:p-8 lg:pb-8">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-6">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-2xl font-bold text-slate-900 lg:text-3xl"
+          className={`text-2xl font-bold lg:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}
         >
           Dashboard
         </motion.h1>
-        <p className="mt-1 text-slate-500">Welcome back, {currentUser?.name}</p>
+        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+          Welcome back, {currentUser?.name}
+        </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
-          title="Monthly Income"
+          title="Income"
           value={formatCurrency(summary?.currentMonth.income || 0)}
           icon="💰"
           color="green"
           delay={0}
         />
         <StatCard
-          title="Monthly Expenses"
+          title="Expenses"
           value={formatCurrency(summary?.currentMonth.expenses || 0)}
           icon="💸"
           color="red"
           delay={0.1}
         />
         <StatCard
-          title="Net Balance"
+          title="Balance"
           value={formatCurrency(summary?.currentMonth.difference || 0)}
           icon={summary?.currentMonth.difference && summary.currentMonth.difference >= 0 ? '📈' : '📉'}
           color={summary?.currentMonth.difference && summary.currentMonth.difference >= 0 ? 'green' : 'red'}
           delay={0.2}
         />
         <StatCard
-          title="Recurring Monthly"
+          title="Recurring"
           value={formatCurrency(summary?.recurring.monthlyExpenses || 0)}
-          subtitle={`${summary?.recurring.count || 0} active items`}
+          subtitle={`${summary?.recurring.count || 0} items`}
           icon="🔄"
           color="blue"
           delay={0.3}
@@ -205,20 +228,28 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Row */}
-      <div className="mb-8 grid gap-6 lg:grid-cols-2">
+      <div className="mb-6 grid gap-4 lg:grid-cols-2 lg:gap-6">
         {/* Line Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${
+            isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+          }`}
         >
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Income vs Expenses</h2>
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              Income vs Expenses
+            </h2>
             <select
               value={comparisonMonths}
               onChange={(e) => setComparisonMonths(Number(e.target.value))}
-              className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-600 focus:border-primary-500 focus:outline-none"
+              className={`rounded-lg border px-3 py-2 text-sm ${
+                isDark
+                  ? 'border-slate-600 bg-slate-700 text-white'
+                  : 'border-slate-200 bg-white text-slate-600'
+              }`}
             >
               <option value={1}>1 Month</option>
               <option value={2}>2 Months</option>
@@ -227,7 +258,7 @@ export default function Dashboard() {
               <option value={12}>1 Year</option>
             </select>
           </div>
-          <div className="h-64">
+          <div className="h-56 sm:h-64">
             <Line data={lineChartData} options={lineChartOptions} />
           </div>
         </motion.div>
@@ -237,14 +268,18 @@ export default function Dashboard() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+          className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${
+            isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+          }`}
         >
-          <h2 className="mb-4 text-lg font-semibold text-slate-900">Expense Categories</h2>
-          <div className="h-64">
+          <h2 className={`mb-4 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            Expense Categories
+          </h2>
+          <div className="h-56 sm:h-64">
             {Object.keys(expensesByCategory).length > 0 ? (
               <Doughnut data={doughnutData} options={doughnutOptions} />
             ) : (
-              <div className="flex h-full items-center justify-center text-slate-400">
+              <div className={`flex h-full items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                 No expense data yet
               </div>
             )}
@@ -257,43 +292,57 @@ export default function Dashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm"
+        className={`rounded-2xl border shadow-sm ${
+          isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+        }`}
       >
-        <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-slate-900">Recent Transactions</h2>
-          <a
-            href="/app/transactions"
-            className="text-sm font-medium text-primary-600 hover:text-primary-700"
+        <div className={`flex items-center justify-between border-b px-4 py-4 sm:px-6 ${
+          isDark ? 'border-slate-700' : 'border-slate-200'
+        }`}>
+          <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+            Recent Transactions
+          </h2>
+          <Link
+            to="/app/transactions"
+            className="text-sm font-medium text-primary-500 hover:text-primary-600"
           >
             View All
-          </a>
+          </Link>
         </div>
         
         {recentTransactions.length > 0 ? (
-          <div className="space-y-3">
+          <div className="divide-y divide-slate-100 dark:divide-slate-700">
             {recentTransactions.map((transaction, index) => (
               <motion.div
                 key={transaction.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.05 }}
-                className="flex items-center justify-between rounded-xl bg-slate-50 p-4"
+                className={`flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 ${
+                  isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+                }`}
               >
-                <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white text-xl shadow-sm">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl shadow-sm sm:h-11 sm:w-11 ${
+                    isDark ? 'bg-slate-700' : 'bg-white'
+                  }`}>
                     {transaction.category?.icon || '📋'}
                   </div>
-                  <div>
-                    <p className="font-medium text-slate-900">
+                  <div className="min-w-0">
+                    <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {transaction.category?.name || 'Unknown'}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className={`text-xs truncate sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                       {new Date(transaction.date).toLocaleDateString()}
                       {transaction.notes && ` · ${transaction.notes}`}
                     </p>
                   </div>
                 </div>
-                <p className={`font-semibold ${transaction.type === 'income' ? 'text-green-600' : 'text-red-600'}`}>
+                <p className={`font-semibold whitespace-nowrap ${
+                  transaction.type === 'income'
+                    ? isDark ? 'text-green-400' : 'text-green-600'
+                    : isDark ? 'text-red-400' : 'text-red-600'
+                }`}>
                   {transaction.type === 'income' ? '+' : '-'}
                   {formatCurrency(transaction.amount)}
                 </p>
@@ -301,7 +350,7 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className="py-8 text-center text-slate-400">
+          <div className={`py-12 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
             No transactions yet. Use Quick Add to create one!
           </div>
         )}
