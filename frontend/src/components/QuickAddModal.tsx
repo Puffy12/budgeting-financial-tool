@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUser } from '../context/UserContext'
 import { useTheme } from '../context/ThemeContext'
@@ -23,6 +23,8 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
   const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showMore, setShowMore] = useState(false)
+  const amountInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (open && currentUser) {
@@ -37,6 +39,9 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
       setDate(new Date().toISOString().split('T')[0])
       setNotes('')
       setError('')
+      setShowMore(false)
+      // Focus amount input after modal opens
+      setTimeout(() => amountInputRef.current?.focus(), 100)
     }
   }, [open])
 
@@ -66,200 +71,262 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
     }
   }
 
+  // Quick number pad for mobile
+  const handleNumPadPress = (value: string) => {
+    if (value === 'backspace') {
+      setAmount(prev => prev.slice(0, -1))
+    } else if (value === '.') {
+      if (!amount.includes('.')) {
+        setAmount(prev => prev + '.')
+      }
+    } else {
+      // Limit to 2 decimal places
+      const parts = amount.split('.')
+      if (parts[1] && parts[1].length >= 2) return
+      setAmount(prev => prev + value)
+    }
+  }
+
   return (
     <AnimatePresence>
       {open && (
         <>
+          {/* Backdrop */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+            className="fixed inset-0 z-50 bg-black/60"
             onClick={onClose}
           />
+          
+          {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, y: '100%' }}
+            initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-3xl p-6 safe-area-bottom sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl ${
-              isDark ? 'bg-slate-800' : 'bg-white'
+            exit={{ opacity: 0, y: 100 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+            className={`fixed inset-x-0 bottom-0 z-50 overflow-hidden rounded-t-3xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl ${
+              isDark ? 'bg-slate-900' : 'bg-white'
             }`}
+            style={{ 
+              maxHeight: 'calc(100vh - env(safe-area-inset-top) - 20px)',
+              paddingBottom: 'env(safe-area-inset-bottom)'
+            }}
           >
-            {/* Handle bar for mobile */}
-            <div className="absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-300 sm:hidden" />
+            {/* Handle bar */}
+            <div className="flex justify-center py-3 sm:hidden">
+              <div className={`h-1 w-12 rounded-full ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
+            </div>
 
-            <div className="mb-6 flex items-center justify-between pt-2 sm:pt-0">
-              <h2 className={`text-xl font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Quick Add</h2>
+            {/* Header - minimal */}
+            <div className="flex items-center justify-between px-5 pb-3 sm:px-6 sm:pt-5">
               <button
                 onClick={onClose}
-                className={`rounded-xl p-2.5 transition-colors ${
-                  isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-100'
+                className={`-ml-2 rounded-xl px-3 py-2 text-sm font-medium ${
+                  isDark ? 'text-slate-400 active:bg-slate-800' : 'text-slate-500 active:bg-slate-100'
                 }`}
               >
-                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Cancel
+              </button>
+              <h2 className={`text-base font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                Quick Add
+              </h2>
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !amount || !categoryId}
+                className={`-mr-2 rounded-xl px-3 py-2 text-sm font-semibold transition-opacity ${
+                  !amount || !categoryId ? 'opacity-40' : ''
+                } ${type === 'expense' ? 'text-red-500' : 'text-green-500'}`}
+              >
+                {loading ? '...' : 'Add'}
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Type Toggle */}
-              <div className={`flex gap-2 rounded-xl p-1 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
+            <form onSubmit={handleSubmit}>
+              {/* Type Toggle - Large touch targets */}
+              <div className={`mx-5 flex gap-1 rounded-2xl p-1 sm:mx-6 ${isDark ? 'bg-slate-800' : 'bg-slate-100'}`}>
                 <button
                   type="button"
-                  onClick={() => setType('expense')}
-                  className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                  onClick={() => { setType('expense'); setCategoryId('') }}
+                  className={`flex-1 rounded-xl py-3.5 text-sm font-semibold transition-all ${
                     type === 'expense'
-                      ? isDark
-                        ? 'bg-slate-600 text-red-400 shadow-sm'
-                        : 'bg-white text-red-600 shadow-sm'
-                      : isDark
-                      ? 'text-slate-400'
-                      : 'text-slate-600'
+                      ? 'bg-red-500 text-white shadow-lg'
+                      : isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
                   Expense
                 </button>
                 <button
                   type="button"
-                  onClick={() => setType('income')}
-                  className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                  onClick={() => { setType('income'); setCategoryId('') }}
+                  className={`flex-1 rounded-xl py-3.5 text-sm font-semibold transition-all ${
                     type === 'income'
-                      ? isDark
-                        ? 'bg-slate-600 text-green-400 shadow-sm'
-                        : 'bg-white text-green-600 shadow-sm'
-                      : isDark
-                      ? 'text-slate-400'
-                      : 'text-slate-600'
+                      ? 'bg-green-500 text-white shadow-lg'
+                      : isDark ? 'text-slate-400' : 'text-slate-500'
                   }`}
                 >
                   Income
                 </button>
               </div>
 
-              {/* Amount */}
-              <div>
-                <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Amount
-                </label>
-                <div className="relative">
-                  <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-lg ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                    $
-                  </span>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0.00"
-                    className={`w-full rounded-xl border py-4 pl-10 pr-4 text-xl font-semibold transition-colors ${
-                      isDark
-                        ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-500 focus:border-primary-500'
-                        : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-primary-500'
-                    }`}
-                    required
-                    autoFocus
-                  />
+              {/* Amount Display */}
+              <div className="px-5 py-6 text-center sm:px-6">
+                <div className={`text-5xl font-bold tabular-nums ${
+                  type === 'expense' 
+                    ? isDark ? 'text-red-400' : 'text-red-500'
+                    : isDark ? 'text-green-400' : 'text-green-500'
+                }`}>
+                  ${amount || '0'}
                 </div>
+                {/* Hidden input for keyboard on desktop */}
+                <input
+                  ref={amountInputRef}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="sr-only sm:not-sr-only sm:mx-auto sm:mt-4 sm:block sm:w-48 sm:rounded-xl sm:border sm:px-4 sm:py-3 sm:text-center sm:text-lg"
+                  style={{ opacity: 0, position: 'absolute', pointerEvents: 'none' }}
+                />
               </div>
 
-              {/* Category */}
-              <div>
-                <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+              {/* Number Pad - Mobile Only */}
+              <div className="grid grid-cols-3 gap-1 px-3 pb-3 sm:hidden">
+                {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'backspace'].map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => handleNumPadPress(key)}
+                    className={`flex h-14 items-center justify-center rounded-xl text-xl font-semibold transition-all active:scale-95 ${
+                      isDark 
+                        ? 'bg-slate-800 text-white active:bg-slate-700' 
+                        : 'bg-slate-100 text-slate-900 active:bg-slate-200'
+                    }`}
+                  >
+                    {key === 'backspace' ? (
+                      <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z" />
+                      </svg>
+                    ) : key}
+                  </button>
+                ))}
+              </div>
+
+              {/* Categories - Scrollable horizontal on mobile */}
+              <div className={`border-t px-5 py-4 sm:px-6 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                <p className={`mb-3 text-xs font-medium uppercase tracking-wide ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
                   Category
-                </label>
-                <div className="grid grid-cols-4 gap-2">
-                  {filteredCategories.slice(0, 8).map((cat) => (
+                </p>
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-5 px-5 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
+                  {filteredCategories.map((cat) => (
                     <button
                       key={cat.id}
                       type="button"
                       onClick={() => setCategoryId(cat.id)}
-                      className={`flex flex-col items-center gap-1.5 rounded-xl border-2 p-3 transition-all active:scale-95 ${
+                      className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-4 py-2.5 transition-all active:scale-95 ${
                         categoryId === cat.id
-                          ? 'border-primary-500 bg-primary-500/10'
+                          ? type === 'expense'
+                            ? 'border-red-500 bg-red-500/10 text-red-500'
+                            : 'border-green-500 bg-green-500/10 text-green-500'
                           : isDark
-                          ? 'border-transparent bg-slate-700 hover:bg-slate-600'
-                          : 'border-transparent bg-slate-50 hover:bg-slate-100'
+                          ? 'border-slate-700 bg-slate-800 text-slate-300'
+                          : 'border-slate-200 bg-slate-50 text-slate-700'
                       }`}
                     >
-                      <span className="text-2xl">{cat.icon}</span>
-                      <span className={`text-[10px] font-medium truncate w-full text-center ${
-                        isDark ? 'text-slate-300' : 'text-slate-700'
-                      }`}>
-                        {cat.name}
-                      </span>
+                      <span className="text-lg">{cat.icon}</span>
+                      <span className="text-sm font-medium whitespace-nowrap">{cat.name}</span>
                     </button>
                   ))}
                 </div>
-                {filteredCategories.length > 8 && (
-                  <select
-                    value={categoryId}
-                    onChange={(e) => setCategoryId(e.target.value)}
-                    className={`mt-3 w-full rounded-xl border px-4 py-3 transition-colors ${
-                      isDark
-                        ? 'border-slate-600 bg-slate-700 text-white'
-                        : 'border-slate-200 bg-white text-slate-900'
-                    }`}
+              </div>
+
+              {/* Optional Fields Toggle */}
+              <div className={`border-t px-5 sm:px-6 ${isDark ? 'border-slate-800' : 'border-slate-100'}`}>
+                <button
+                  type="button"
+                  onClick={() => setShowMore(!showMore)}
+                  className={`flex w-full items-center justify-between py-4 text-sm ${
+                    isDark ? 'text-slate-400' : 'text-slate-500'
+                  }`}
+                >
+                  <span>Date & Notes</span>
+                  <svg 
+                    className={`h-4 w-4 transition-transform ${showMore ? 'rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
                   >
-                    <option value="">More categories...</option>
-                    {filteredCategories.map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.icon} {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
 
-              {/* Date */}
-              <div>
-                <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                  className={`w-full rounded-xl border px-4 py-3.5 transition-colors ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-700 text-white'
-                      : 'border-slate-200 bg-white text-slate-900'
-                  }`}
-                />
-              </div>
-
-              {/* Notes */}
-              <div>
-                <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  Notes (optional)
-                </label>
-                <input
-                  type="text"
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Add a note..."
-                  className={`w-full rounded-xl border px-4 py-3.5 transition-colors ${
-                    isDark
-                      ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-500'
-                      : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400'
-                  }`}
-                />
+                {/* Expandable Section */}
+                <AnimatePresence>
+                  {showMore && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="space-y-4 pb-4">
+                        <div>
+                          <label className={`mb-2 block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Date
+                          </label>
+                          <input
+                            type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            className={`w-full rounded-xl border px-4 py-3 text-sm ${
+                              isDark
+                                ? 'border-slate-700 bg-slate-800 text-white'
+                                : 'border-slate-200 bg-slate-50 text-slate-900'
+                            }`}
+                          />
+                        </div>
+                        <div>
+                          <label className={`mb-2 block text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                            Notes
+                          </label>
+                          <input
+                            type="text"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Add a note..."
+                            className={`w-full rounded-xl border px-4 py-3 text-sm ${
+                              isDark
+                                ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-600'
+                                : 'border-slate-200 bg-slate-50 text-slate-900 placeholder:text-slate-400'
+                            }`}
+                          />
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {error && (
-                <p className="text-sm text-red-500">{error}</p>
+                <p className="px-5 pb-3 text-sm text-red-500 sm:px-6">{error}</p>
               )}
 
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading || !amount || !categoryId}
-                className="w-full rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 py-4 text-base font-semibold text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {loading ? 'Adding...' : `Add ${type === 'expense' ? 'Expense' : 'Income'}`}
-              </button>
+              {/* Submit Button - Large touch target */}
+              <div className="p-5 pt-2 sm:p-6 sm:pt-2">
+                <button
+                  type="submit"
+                  disabled={loading || !amount || !categoryId}
+                  className={`w-full rounded-2xl py-4 text-base font-bold shadow-lg transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
+                    type === 'expense'
+                      ? 'bg-red-500 text-white shadow-red-500/30'
+                      : 'bg-green-500 text-white shadow-green-500/30'
+                  }`}
+                >
+                  {loading ? 'Adding...' : `Add ${type === 'expense' ? 'Expense' : 'Income'}`}
+                </button>
+              </div>
             </form>
           </motion.div>
         </>
