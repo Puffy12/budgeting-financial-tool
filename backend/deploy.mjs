@@ -58,6 +58,7 @@ const TMP_DIR = path.join(__dirname, '.deploy-tmp');
 const ARCHIVE_PATH = path.join(TMP_DIR, 'deploy.zip');
 
 // Files and directories to exclude from deployment
+// IMPORTANT: These are NEVER uploaded to the server to preserve server-side data
 const EXCLUDE_PATTERNS = [
   'node_modules',
   '.git',
@@ -66,9 +67,9 @@ const EXCLUDE_PATTERNS = [
   '.DS_Store',
   'deploy.mjs',
   'backup.mjs',
-  'backups',   // Don't upload local backups
-  'storage',  // Don't upload storage - it's the database
-  'data',     // Don't upload data folder either
+  'backups',    // Don't upload local backups
+  'storage',    // Don't upload storage
+  'data',       // CRITICAL: Never upload data folder - user data lives on server only
 ];
 
 // Check flags
@@ -285,7 +286,9 @@ function uploadAndDeploy() {
         let extractCommands;
         
         if (shouldReset) {
-          console.log('⚠️  RESET MODE: Will delete storage and data folders!');
+          console.log('⚠️  RESET MODE: Will delete ALL data including user data!');
+          console.log('⚠️  This is irreversible! Press Ctrl+C within 5 seconds to cancel...');
+          await new Promise(resolve => setTimeout(resolve, 5000));
           extractCommands = [
             // Create project directory if it doesn't exist
             `mkdir -p ${REMOTE_PROJECT_DIR}`,
@@ -295,18 +298,21 @@ function uploadAndDeploy() {
             `cd ${REMOTE_APP_DIR} && unzip -o deploy.zip -d ${REMOTE_PROJECT_DIR}`,
             // Remove archive
             `rm -f ${REMOTE_APP_DIR}/deploy.zip`,
+            // Create empty data directory
+            `mkdir -p ${REMOTE_PROJECT_DIR}/data`,
           ];
         } else {
+          console.log('✅ SAFE MODE: Preserving data/, .env, and storage/ on server');
           extractCommands = [
             // Create project directory if it doesn't exist
             `mkdir -p ${REMOTE_PROJECT_DIR}`,
-            // Remove old files in myproject (except node_modules, .env, storage, data)
+            // Remove old files in myproject (PRESERVING: node_modules, .env, storage, data)
             `cd ${REMOTE_PROJECT_DIR} && find . -mindepth 1 -maxdepth 1 ! -name 'node_modules' ! -name '.env' ! -name 'storage' ! -name 'data' -exec rm -rf {} + || true`,
-            // Extract archive to project directory
+            // Extract archive to project directory (data not in archive, so server data is safe)
             `cd ${REMOTE_APP_DIR} && unzip -o deploy.zip -d ${REMOTE_PROJECT_DIR}`,
             // Remove archive
             `rm -f ${REMOTE_APP_DIR}/deploy.zip`,
-            // Create storage and data directories if they don't exist
+            // Create storage and data directories if they don't exist (won't affect existing)
             `mkdir -p ${REMOTE_PROJECT_DIR}/storage`,
             `mkdir -p ${REMOTE_PROJECT_DIR}/data`,
           ];
@@ -343,6 +349,16 @@ function uploadAndDeploy() {
           console.log(`   ✅ dist/ folder exists (frontend deployed)`);
         } else {
           console.warn(`   ⚠️  dist/ folder is MISSING (run with --build flag)`);
+        }
+
+        // Check if data folder exists and has content
+        const dataCheckCommand = `test -d ${REMOTE_PROJECT_DIR}/data && ls -la ${REMOTE_PROJECT_DIR}/data | wc -l`;
+        const dataCheckResult = await executeCommand(conn, dataCheckCommand, true);
+        const dataLineCount = parseInt(dataCheckResult.stdout?.trim() || '0', 10);
+        if (dataLineCount > 3) { // More than just . and .. and users.json
+          console.log(`   ✅ data/ folder preserved (${dataLineCount - 3} user folders)`);
+        } else {
+          console.log(`   ℹ️  data/ folder exists (empty or new)`);
         }
 
         // Run deployment sequence
