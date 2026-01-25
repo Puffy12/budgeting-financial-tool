@@ -77,17 +77,55 @@ const shouldReset = process.argv.includes('--reset');
 
 function buildFrontend() {
   console.log('🔨 Building frontend...');
-  const frontendDir = path.join(__dirname, '..', 'SecurityReportFrontend');
+  const frontendDir = path.join(__dirname, '..', 'frontend');
+  const distSource = path.join(frontendDir, 'dist');
+  const distDest = path.join(__dirname, 'dist');
   
   try {
-    execSync('npm run build:deploy', {
+    // Build the frontend
+    console.log('   Running npm run build in frontend...');
+    execSync('npm run build', {
       cwd: frontendDir,
       stdio: 'inherit',
     });
-    console.log('✅ Frontend built and deployed to server/dist');
+    
+    // Remove existing dist in backend if it exists
+    if (fs.existsSync(distDest)) {
+      console.log('   Removing existing backend/dist...');
+      fs.rmSync(distDest, { recursive: true, force: true });
+    }
+    
+    // Copy dist from frontend to backend
+    console.log('   Copying dist to backend...');
+    copyDirSync(distSource, distDest);
+    
+    // Remove dist from frontend
+    console.log('   Cleaning up frontend/dist...');
+    fs.rmSync(distSource, { recursive: true, force: true });
+    
+    console.log('✅ Frontend built and deployed to backend/dist');
   } catch (error) {
     console.error('❌ Failed to build frontend:', error.message);
     process.exit(1);
+  }
+}
+
+/**
+ * Recursively copy a directory
+ */
+function copyDirSync(src, dest) {
+  fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    
+    if (entry.isDirectory()) {
+      copyDirSync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
   }
 }
 

@@ -9,7 +9,9 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd frontend && npm run build",
-    "start": "cd backend && npm start"
+    "start": "cd backend && npm start",
+    "deploy": "cd backend && node deploy.mjs --build",
+    "deploy:reset": "cd backend && node deploy.mjs --build --reset"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
