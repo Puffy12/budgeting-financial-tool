@@ -1,3 +1,6 @@
+#Database
+backend/data/
+
 # Dependencies
 node_modules/
 .pnp
