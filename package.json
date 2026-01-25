@@ -9,6 +9,7 @@
     "dev:frontend": "cd frontend && npm run dev",
     "install:all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "build": "cd frontend && npm run build",
+    "copy:dist": "node -e \"const fs=require('fs');if(fs.existsSync('../backend/dist'))fs.rmSync('../backend/dist',{recursive:true});fs.cpSync('dist','../backend/dist',{recursive:true});fs.rmSync('dist',{recursive:true});console.log('Dist copied to backend')\"",
     "start": "cd backend && npm start",
     "deploy": "cd backend && node deploy.mjs --build",
     "deploy:reset": "cd backend && node deploy.mjs --build --reset"
