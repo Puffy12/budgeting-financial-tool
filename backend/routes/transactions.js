@@ -25,7 +25,8 @@ router.use(validateUser);
  */
 router.get('/', (req, res) => {
   try {
-    let transactions = db.getByUserId('transactions', req.params.userId);
+    const userId = req.params.userId;
+    let transactions = db.getAll('transactions', userId);
     const { month, year, type, categoryId, startDate, endDate, limit, offset } = req.query;
     
     // Filter by month/year
@@ -74,7 +75,7 @@ router.get('/', (req, res) => {
     }
     
     // Include category info
-    const categories = db.getByUserId('categories', req.params.userId);
+    const categories = db.getAll('categories', userId);
     const transactionsWithCategory = transactions.map(t => {
       const category = categories.find(c => c.id === t.categoryId);
       return {
@@ -100,14 +101,15 @@ router.get('/', (req, res) => {
  */
 router.get('/:transactionId', (req, res) => {
   try {
-    const transaction = db.getById('transactions', req.params.transactionId);
+    const userId = req.params.userId;
+    const transaction = db.getById('transactions', req.params.transactionId, userId);
     
-    if (!transaction || transaction.userId !== req.params.userId) {
+    if (!transaction || transaction.userId !== userId) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
     
     // Include category info
-    const category = db.getById('categories', transaction.categoryId);
+    const category = db.getById('categories', transaction.categoryId, userId);
     
     res.json({
       ...transaction,
@@ -125,6 +127,7 @@ router.get('/:transactionId', (req, res) => {
 router.post('/', (req, res) => {
   try {
     const { amount, type, categoryId, date, notes } = req.body;
+    const userId = req.params.userId;
     
     if (amount === undefined || amount <= 0) {
       return res.status(400).json({ error: 'Amount must be a positive number' });
@@ -139,8 +142,8 @@ router.post('/', (req, res) => {
     }
     
     // Validate category exists and belongs to user
-    const category = db.getById('categories', categoryId);
-    if (!category || category.userId !== req.params.userId) {
+    const category = db.getById('categories', categoryId, userId);
+    if (!category || category.userId !== userId) {
       return res.status(400).json({ error: 'Invalid category' });
     }
     
@@ -148,7 +151,7 @@ router.post('/', (req, res) => {
     
     const transaction = {
       id: uuidv4(),
-      userId: req.params.userId,
+      userId: userId,
       categoryId,
       amount: parseFloat(amount),
       type,
@@ -160,7 +163,7 @@ router.post('/', (req, res) => {
       updatedAt: now
     };
     
-    db.insert('transactions', transaction);
+    db.insert('transactions', transaction, userId);
     
     res.status(201).json({
       ...transaction,
@@ -178,10 +181,11 @@ router.post('/', (req, res) => {
 router.put('/:transactionId', (req, res) => {
   try {
     const { amount, type, categoryId, date, notes } = req.body;
+    const userId = req.params.userId;
     
-    const existingTransaction = db.getById('transactions', req.params.transactionId);
+    const existingTransaction = db.getById('transactions', req.params.transactionId, userId);
     
-    if (!existingTransaction || existingTransaction.userId !== req.params.userId) {
+    if (!existingTransaction || existingTransaction.userId !== userId) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
     
@@ -199,8 +203,8 @@ router.put('/:transactionId', (req, res) => {
     }
     
     if (categoryId) {
-      const category = db.getById('categories', categoryId);
-      if (!category || category.userId !== req.params.userId) {
+      const category = db.getById('categories', categoryId, userId);
+      if (!category || category.userId !== userId) {
         return res.status(400).json({ error: 'Invalid category' });
       }
       updates.categoryId = categoryId;
@@ -214,10 +218,10 @@ router.put('/:transactionId', (req, res) => {
       updates.notes = notes;
     }
     
-    const transaction = db.update('transactions', req.params.transactionId, updates);
+    const transaction = db.update('transactions', req.params.transactionId, updates, userId);
     
     // Include category info
-    const category = db.getById('categories', transaction.categoryId);
+    const category = db.getById('categories', transaction.categoryId, userId);
     
     res.json({
       ...transaction,
@@ -234,13 +238,14 @@ router.put('/:transactionId', (req, res) => {
  */
 router.delete('/:transactionId', (req, res) => {
   try {
-    const transaction = db.getById('transactions', req.params.transactionId);
+    const userId = req.params.userId;
+    const transaction = db.getById('transactions', req.params.transactionId, userId);
     
-    if (!transaction || transaction.userId !== req.params.userId) {
+    if (!transaction || transaction.userId !== userId) {
       return res.status(404).json({ error: 'Transaction not found' });
     }
     
-    db.remove('transactions', req.params.transactionId);
+    db.remove('transactions', req.params.transactionId, userId);
     
     res.json({ message: 'Transaction deleted successfully' });
   } catch (error) {

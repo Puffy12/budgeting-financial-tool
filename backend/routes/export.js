@@ -25,10 +25,10 @@ router.use(validateUser);
 router.get('/export', (req, res) => {
   try {
     const userId = req.params.userId;
-    const user = db.getById('users', userId);
-    const categories = db.getByUserId('categories', userId);
-    const transactions = db.getByUserId('transactions', userId);
-    const recurring = db.getByUserId('recurring', userId);
+    const user = db.getUserById(userId);
+    const categories = db.getAll('categories', userId);
+    const transactions = db.getAll('transactions', userId);
+    const recurring = db.getAll('recurring', userId);
     
     const exportData = {
       exportedAt: new Date().toISOString(),
@@ -91,9 +91,9 @@ router.get('/export/month/:year/:month', (req, res) => {
       return res.status(400).json({ error: 'Invalid year or month' });
     }
     
-    const user = db.getById('users', userId);
-    const categories = db.getByUserId('categories', userId);
-    const allTransactions = db.getByUserId('transactions', userId);
+    const user = db.getUserById(userId);
+    const categories = db.getAll('categories', userId);
+    const allTransactions = db.getAll('transactions', userId);
     
     // Filter transactions for the specified month
     const transactions = allTransactions.filter(t => {
@@ -165,9 +165,9 @@ router.get('/export/year/:year', (req, res) => {
       return res.status(400).json({ error: 'Invalid year' });
     }
     
-    const user = db.getById('users', userId);
-    const categories = db.getByUserId('categories', userId);
-    const allTransactions = db.getByUserId('transactions', userId);
+    const user = db.getUserById(userId);
+    const categories = db.getAll('categories', userId);
+    const allTransactions = db.getAll('transactions', userId);
     
     // Filter transactions for the specified year
     const transactions = allTransactions.filter(t => {
@@ -252,7 +252,7 @@ router.post('/import', (req, res) => {
     }
     
     const now = new Date().toISOString();
-    const categories = db.getByUserId('categories', userId);
+    const categories = db.getAll('categories', userId);
     
     let importedCategories = 0;
     let importedTransactions = 0;
@@ -277,14 +277,14 @@ router.post('/import', (req, res) => {
             icon: cat.icon || (cat.type === 'expense' ? '📋' : '💰'),
             createdAt: now,
             updatedAt: now
-          });
+          }, userId);
           importedCategories++;
         }
       }
     }
     
     // Refresh categories list after imports
-    const updatedCategories = db.getByUserId('categories', userId);
+    const updatedCategories = db.getAll('categories', userId);
     
     // Import transactions
     if (data.transactions && Array.isArray(data.transactions)) {
@@ -304,7 +304,7 @@ router.post('/import', (req, res) => {
             recurringId: null,
             createdAt: now,
             updatedAt: now
-          });
+          }, userId);
           importedTransactions++;
         }
       }
@@ -330,7 +330,7 @@ router.post('/import', (req, res) => {
             isActive: rec.isActive !== undefined ? rec.isActive : true,
             createdAt: now,
             updatedAt: now
-          });
+          }, userId);
           importedRecurring++;
         }
       }

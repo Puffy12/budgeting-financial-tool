@@ -37,7 +37,7 @@ function calculateNextDueDate(currentDate, frequency) {
 }
 
 /**
- * Process all due recurring transactions
+ * Process all due recurring transactions for all users
  */
 function processRecurringTransactions() {
   const now = new Date();
@@ -45,37 +45,42 @@ function processRecurringTransactions() {
   
   console.log(`[${now.toISOString()}] Processing recurring transactions...`);
   
-  const allRecurring = db.getAll('recurring');
+  // Get all users
+  const users = db.getAllUsers();
   let processedCount = 0;
   
-  for (const recurring of allRecurring) {
-    if (!recurring.isActive) continue;
+  for (const user of users) {
+    const allRecurring = db.getAll('recurring', user.id);
     
-    // Check if the recurring transaction is due
-    if (recurring.nextDueDate <= today) {
-      // Create the transaction
-      const transaction = {
-        id: uuidv4(),
-        userId: recurring.userId,
-        categoryId: recurring.categoryId,
-        amount: recurring.amount,
-        type: recurring.type,
-        date: recurring.nextDueDate,
-        notes: recurring.notes ? `${recurring.notes} (Recurring)` : 'Recurring transaction',
-        isRecurring: true,
-        recurringId: recurring.id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+    for (const recurring of allRecurring) {
+      if (!recurring.isActive) continue;
       
-      db.insert('transactions', transaction);
-      
-      // Update the next due date
-      const nextDueDate = calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
-      db.update('recurring', recurring.id, { nextDueDate });
-      
-      processedCount++;
-      console.log(`  Created transaction for recurring "${recurring.name}" (${recurring.id})`);
+      // Check if the recurring transaction is due
+      if (recurring.nextDueDate <= today) {
+        // Create the transaction
+        const transaction = {
+          id: uuidv4(),
+          userId: recurring.userId,
+          categoryId: recurring.categoryId,
+          amount: recurring.amount,
+          type: recurring.type,
+          date: recurring.nextDueDate,
+          notes: recurring.notes ? `${recurring.notes} (Recurring)` : 'Recurring transaction',
+          isRecurring: true,
+          recurringId: recurring.id,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        db.insert('transactions', transaction, user.id);
+        
+        // Update the next due date
+        const nextDueDate = calculateNextDueDate(recurring.nextDueDate, recurring.frequency);
+        db.update('recurring', recurring.id, { nextDueDate }, user.id);
+        
+        processedCount++;
+        console.log(`  Created transaction for recurring "${recurring.name}" (${recurring.id}) for user ${user.name}`);
+      }
     }
   }
   
@@ -86,8 +91,8 @@ function processRecurringTransactions() {
 /**
  * Manually process a specific recurring transaction
  */
-function processSpecificRecurring(recurringId) {
-  const recurring = db.getById('recurring', recurringId);
+function processSpecificRecurring(recurringId, userId) {
+  const recurring = db.getById('recurring', recurringId, userId);
   
   if (!recurring) {
     return { success: false, error: 'Recurring transaction not found' };
@@ -112,11 +117,11 @@ function processSpecificRecurring(recurringId) {
     updatedAt: new Date().toISOString()
   };
   
-  db.insert('transactions', transaction);
+  db.insert('transactions', transaction, userId);
   
   // Update the next due date
   const nextDueDate = calculateNextDueDate(new Date().toISOString().split('T')[0], recurring.frequency);
-  db.update('recurring', recurring.id, { nextDueDate });
+  db.update('recurring', recurring.id, { nextDueDate }, userId);
   
   return { success: true, transaction };
 }

@@ -1,20 +1,20 @@
 /**
- * Simple file-based JSON database utility
+ * File-based JSON database utility
+ * 
+ * Structure:
+ * data/
+ *   users.json              - List of all users
+ *   {userId}/
+ *     categories.json       - User's categories
+ *     transactions.json     - User's transactions  
+ *     recurring.json        - User's recurring transactions
  */
 
 const fs = require('fs');
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', 'data', 'db.json');
 const DATA_DIR = path.join(__dirname, '..', 'data');
-
-// Default database structure with default categories template
-const DEFAULT_DB = {
-  users: [],
-  categories: [],
-  transactions: [],
-  recurring: []
-};
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Default categories to create for new users
 const DEFAULT_CATEGORIES = [
@@ -42,128 +42,266 @@ const DEFAULT_CATEGORIES = [
 ];
 
 /**
- * Ensure data directory and db.json exist
+ * Ensure data directory exists
  */
 function initDb() {
   if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
-  if (!fs.existsSync(DB_PATH)) {
-    fs.writeFileSync(DB_PATH, JSON.stringify(DEFAULT_DB, null, 2));
+  if (!fs.existsSync(USERS_FILE)) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
   }
 }
 
 /**
- * Read the entire database
+ * Get path to user's data directory
  */
-function readDb() {
+function getUserDir(userId) {
+  return path.join(DATA_DIR, userId);
+}
+
+/**
+ * Get path to a user's collection file
+ */
+function getUserCollectionPath(userId, collection) {
+  return path.join(getUserDir(userId), `${collection}.json`);
+}
+
+/**
+ * Ensure user directory and files exist
+ */
+function initUserDir(userId) {
+  const userDir = getUserDir(userId);
+  if (!fs.existsSync(userDir)) {
+    fs.mkdirSync(userDir, { recursive: true });
+  }
+  
+  const collections = ['categories', 'transactions', 'recurring'];
+  for (const collection of collections) {
+    const filePath = getUserCollectionPath(userId, collection);
+    if (!fs.existsSync(filePath)) {
+      fs.writeFileSync(filePath, JSON.stringify([], null, 2));
+    }
+  }
+}
+
+/**
+ * Read JSON file safely
+ */
+function readJsonFile(filePath) {
+  try {
+    if (!fs.existsSync(filePath)) {
+      return [];
+    }
+    const data = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error(`Error reading ${filePath}:`, error);
+    return [];
+  }
+}
+
+/**
+ * Write JSON file safely
+ */
+function writeJsonFile(filePath, data) {
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+// ============ Users Collection ============
+
+/**
+ * Get all users
+ */
+function getAllUsers() {
   initDb();
-  const data = fs.readFileSync(DB_PATH, 'utf8');
-  return JSON.parse(data);
+  return readJsonFile(USERS_FILE);
 }
 
 /**
- * Write the entire database
+ * Get user by ID
  */
-function writeDb(data) {
-  initDb();
-  fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2));
+function getUserById(userId) {
+  const users = getAllUsers();
+  return users.find(u => u.id === userId);
 }
 
 /**
- * Get all items from a collection
+ * Insert a new user
  */
-function getAll(collection) {
-  const db = readDb();
-  return db[collection] || [];
+function insertUser(user) {
+  const users = getAllUsers();
+  users.push(user);
+  writeJsonFile(USERS_FILE, users);
+  
+  // Create user's data directory
+  initUserDir(user.id);
+  
+  return user;
 }
 
 /**
- * Get item by ID from a collection
+ * Update a user
  */
-function getById(collection, id) {
-  const db = readDb();
-  return (db[collection] || []).find(item => item.id === id);
+function updateUser(userId, updates) {
+  const users = getAllUsers();
+  const index = users.findIndex(u => u.id === userId);
+  if (index === -1) return null;
+  
+  users[index] = { ...users[index], ...updates, updatedAt: new Date().toISOString() };
+  writeJsonFile(USERS_FILE, users);
+  return users[index];
 }
 
 /**
- * Get items by user ID
+ * Delete a user and their data
  */
-function getByUserId(collection, userId) {
-  const db = readDb();
-  return (db[collection] || []).filter(item => item.userId === userId);
-}
-
-/**
- * Insert a new item into a collection
- */
-function insert(collection, item) {
-  const db = readDb();
-  if (!db[collection]) {
-    db[collection] = [];
+function deleteUser(userId) {
+  const users = getAllUsers();
+  const index = users.findIndex(u => u.id === userId);
+  if (index === -1) return false;
+  
+  users.splice(index, 1);
+  writeJsonFile(USERS_FILE, users);
+  
+  // Delete user's data directory
+  const userDir = getUserDir(userId);
+  if (fs.existsSync(userDir)) {
+    fs.rmSync(userDir, { recursive: true, force: true });
   }
-  db[collection].push(item);
-  writeDb(db);
-  return item;
-}
-
-/**
- * Insert multiple items into a collection
- */
-function insertMany(collection, items) {
-  const db = readDb();
-  if (!db[collection]) {
-    db[collection] = [];
-  }
-  db[collection].push(...items);
-  writeDb(db);
-  return items;
-}
-
-/**
- * Update an item in a collection
- */
-function update(collection, id, updates) {
-  const db = readDb();
-  const index = (db[collection] || []).findIndex(item => item.id === id);
-  if (index === -1) {
-    return null;
-  }
-  db[collection][index] = { ...db[collection][index], ...updates, updatedAt: new Date().toISOString() };
-  writeDb(db);
-  return db[collection][index];
-}
-
-/**
- * Delete an item from a collection
- */
-function remove(collection, id) {
-  const db = readDb();
-  const index = (db[collection] || []).findIndex(item => item.id === id);
-  if (index === -1) {
-    return false;
-  }
-  db[collection].splice(index, 1);
-  writeDb(db);
+  
   return true;
 }
 
 /**
- * Delete multiple items by user ID
+ * Check if user exists
  */
-function removeByUserId(collection, userId) {
-  const db = readDb();
-  const initialLength = (db[collection] || []).length;
-  db[collection] = (db[collection] || []).filter(item => item.userId !== userId);
-  writeDb(db);
-  return initialLength - db[collection].length;
+function userExists(userId) {
+  return !!getUserById(userId);
+}
+
+// ============ User Collections (categories, transactions, recurring) ============
+
+/**
+ * Get all items from a user's collection
+ */
+function getAll(collection, userId) {
+  if (!userId) {
+    console.error('getAll requires userId');
+    return [];
+  }
+  initUserDir(userId);
+  const filePath = getUserCollectionPath(userId, collection);
+  return readJsonFile(filePath);
 }
 
 /**
- * Check if a user exists
+ * Get item by ID from a user's collection
  */
-function userExists(userId) {
-  return !!getById('users', userId);
+function getById(collection, id, userId) {
+  const items = getAll(collection, userId);
+  return items.find(item => item.id === id);
+}
+
+/**
+ * Get items by user ID (for compatibility - just returns all items in user's collection)
+ */
+function getByUserId(collection, userId) {
+  return getAll(collection, userId);
+}
+
+/**
+ * Insert a new item into a user's collection
+ */
+function insert(collection, item, userId) {
+  if (!userId) {
+    userId = item.userId;
+  }
+  if (!userId) {
+    console.error('insert requires userId');
+    return null;
+  }
+  
+  initUserDir(userId);
+  const filePath = getUserCollectionPath(userId, collection);
+  const items = readJsonFile(filePath);
+  items.push(item);
+  writeJsonFile(filePath, items);
+  return item;
+}
+
+/**
+ * Insert multiple items into a user's collection
+ */
+function insertMany(collection, newItems, userId) {
+  if (!userId && newItems.length > 0) {
+    userId = newItems[0].userId;
+  }
+  if (!userId) {
+    console.error('insertMany requires userId');
+    return [];
+  }
+  
+  initUserDir(userId);
+  const filePath = getUserCollectionPath(userId, collection);
+  const items = readJsonFile(filePath);
+  items.push(...newItems);
+  writeJsonFile(filePath, items);
+  return newItems;
+}
+
+/**
+ * Update an item in a user's collection
+ */
+function update(collection, id, updates, userId) {
+  if (!userId) {
+    console.error('update requires userId');
+    return null;
+  }
+  
+  const filePath = getUserCollectionPath(userId, collection);
+  const items = readJsonFile(filePath);
+  const index = items.findIndex(item => item.id === id);
+  
+  if (index === -1) return null;
+  
+  items[index] = { ...items[index], ...updates, updatedAt: new Date().toISOString() };
+  writeJsonFile(filePath, items);
+  return items[index];
+}
+
+/**
+ * Delete an item from a user's collection
+ */
+function remove(collection, id, userId) {
+  if (!userId) {
+    console.error('remove requires userId');
+    return false;
+  }
+  
+  const filePath = getUserCollectionPath(userId, collection);
+  const items = readJsonFile(filePath);
+  const index = items.findIndex(item => item.id === id);
+  
+  if (index === -1) return false;
+  
+  items.splice(index, 1);
+  writeJsonFile(filePath, items);
+  return true;
+}
+
+/**
+ * Delete all items in a user's collection (used when deleting user)
+ */
+function removeByUserId(collection, userId) {
+  const filePath = getUserCollectionPath(userId, collection);
+  if (fs.existsSync(filePath)) {
+    const items = readJsonFile(filePath);
+    const count = items.length;
+    writeJsonFile(filePath, []);
+    return count;
+  }
+  return 0;
 }
 
 /**
@@ -173,10 +311,73 @@ function getDefaultCategories() {
   return DEFAULT_CATEGORIES;
 }
 
+// ============ Migration Helper ============
+
+/**
+ * Migrate from old single db.json format to new folder structure
+ */
+function migrateFromOldFormat() {
+  const oldDbPath = path.join(DATA_DIR, 'db.json');
+  
+  if (!fs.existsSync(oldDbPath)) {
+    return false; // No migration needed
+  }
+  
+  console.log('Migrating from old database format...');
+  
+  try {
+    const oldData = JSON.parse(fs.readFileSync(oldDbPath, 'utf8'));
+    
+    // Migrate users
+    if (oldData.users && oldData.users.length > 0) {
+      writeJsonFile(USERS_FILE, oldData.users);
+      
+      // For each user, create their folder and migrate their data
+      for (const user of oldData.users) {
+        initUserDir(user.id);
+        
+        // Migrate categories
+        const userCategories = (oldData.categories || []).filter(c => c.userId === user.id);
+        writeJsonFile(getUserCollectionPath(user.id, 'categories'), userCategories);
+        
+        // Migrate transactions
+        const userTransactions = (oldData.transactions || []).filter(t => t.userId === user.id);
+        writeJsonFile(getUserCollectionPath(user.id, 'transactions'), userTransactions);
+        
+        // Migrate recurring
+        const userRecurring = (oldData.recurring || []).filter(r => r.userId === user.id);
+        writeJsonFile(getUserCollectionPath(user.id, 'recurring'), userRecurring);
+        
+        console.log(`  Migrated user: ${user.name} (${user.id})`);
+      }
+    }
+    
+    // Rename old db.json to db.json.backup
+    fs.renameSync(oldDbPath, path.join(DATA_DIR, 'db.json.backup'));
+    console.log('Migration complete! Old database backed up to db.json.backup');
+    
+    return true;
+  } catch (error) {
+    console.error('Migration failed:', error);
+    return false;
+  }
+}
+
+// Run migration on module load
+initDb();
+migrateFromOldFormat();
+
 module.exports = {
   initDb,
-  readDb,
-  writeDb,
+  initUserDir,
+  // Users
+  getAllUsers,
+  getUserById,
+  insertUser,
+  updateUser,
+  deleteUser,
+  userExists,
+  // Collections
   getAll,
   getById,
   getByUserId,
@@ -185,6 +386,6 @@ module.exports = {
   update,
   remove,
   removeByUserId,
-  userExists,
+  // Helpers
   getDefaultCategories
 };

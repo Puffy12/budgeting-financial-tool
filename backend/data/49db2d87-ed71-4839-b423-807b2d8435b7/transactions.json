@@ -1,0 +1,28 @@
+[
+  {
+    "id": "0b398dc6-f53b-42d9-86a6-205f86847766",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "categoryId": "d5556781-08d8-4e87-8fea-584da381447d",
+    "amount": 10,
+    "type": "expense",
+    "date": "2026-01-25",
+    "notes": "Test",
+    "isRecurring": false,
+    "recurringId": null,
+    "createdAt": "2026-01-25T20:48:50.307Z",
+    "updatedAt": "2026-01-25T20:48:50.307Z"
+  },
+  {
+    "id": "a9c5d7d6-a5e8-46f0-856a-9ec866b21ed8",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "categoryId": "0fa76563-76e3-4979-af32-7de4890d5cb0",
+    "amount": 100,
+    "type": "income",
+    "date": "2026-01-25",
+    "notes": "",
+    "isRecurring": false,
+    "recurringId": null,
+    "createdAt": "2026-01-25T20:56:46.946Z",
+    "updatedAt": "2026-01-25T20:56:46.946Z"
+  }
+]

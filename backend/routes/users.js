@@ -12,7 +12,7 @@ const db = require('../utils/db');
  */
 router.get('/', (req, res) => {
   try {
-    const users = db.getAll('users');
+    const users = db.getAllUsers();
     res.json(users);
   } catch (error) {
     console.error('Error listing users:', error);
@@ -25,7 +25,7 @@ router.get('/', (req, res) => {
  */
 router.get('/:userId', (req, res) => {
   try {
-    const user = db.getById('users', req.params.userId);
+    const user = db.getUserById(req.params.userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
@@ -57,7 +57,7 @@ router.post('/', (req, res) => {
       updatedAt: now
     };
     
-    db.insert('users', user);
+    db.insertUser(user);
     
     // Create default categories for the new user
     const defaultCategories = db.getDefaultCategories().map(cat => ({
@@ -70,7 +70,7 @@ router.post('/', (req, res) => {
       updatedAt: now
     }));
     
-    db.insertMany('categories', defaultCategories);
+    db.insertMany('categories', defaultCategories, userId);
     
     res.status(201).json(user);
   } catch (error) {
@@ -90,7 +90,7 @@ router.put('/:userId', (req, res) => {
       return res.status(400).json({ error: 'Name is required' });
     }
     
-    const user = db.update('users', req.params.userId, { name: name.trim() });
+    const user = db.updateUser(req.params.userId, { name: name.trim() });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -111,16 +111,13 @@ router.delete('/:userId', (req, res) => {
     const userId = req.params.userId;
     
     // Check if user exists
-    const user = db.getById('users', userId);
+    const user = db.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    // Delete all user data
-    db.removeByUserId('categories', userId);
-    db.removeByUserId('transactions', userId);
-    db.removeByUserId('recurring', userId);
-    db.remove('users', userId);
+    // Delete user (this also deletes their data folder)
+    db.deleteUser(userId);
     
     res.json({ message: 'User and all associated data deleted successfully' });
   } catch (error) {
@@ -140,8 +137,8 @@ router.get('/:userId/stats/summary', (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const transactions = db.getByUserId('transactions', userId);
-    const recurring = db.getByUserId('recurring', userId).filter(r => r.isActive);
+    const transactions = db.getAll('transactions', userId);
+    const recurring = db.getAll('recurring', userId).filter(r => r.isActive);
     
     const now = new Date();
     const currentMonth = now.getMonth();
@@ -224,8 +221,8 @@ router.get('/:userId/stats/monthly', (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const transactions = db.getByUserId('transactions', userId);
-    const categories = db.getByUserId('categories', userId);
+    const transactions = db.getAll('transactions', userId);
+    const categories = db.getAll('categories', userId);
     
     const now = new Date();
     const monthsToShow = parseInt(months, 10) || 6;
@@ -295,7 +292,7 @@ router.get('/:userId/stats/comparison', (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     
-    const transactions = db.getByUserId('transactions', userId);
+    const transactions = db.getAll('transactions', userId);
     const monthsToCompare = parseInt(months, 10) || 12;
     
     const now = new Date();

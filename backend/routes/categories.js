@@ -24,7 +24,7 @@ router.use(validateUser);
  */
 router.get('/', (req, res) => {
   try {
-    const categories = db.getByUserId('categories', req.params.userId);
+    const categories = db.getAll('categories', req.params.userId);
     res.json(categories);
   } catch (error) {
     console.error('Error listing categories:', error);
@@ -37,7 +37,7 @@ router.get('/', (req, res) => {
  */
 router.get('/:categoryId', (req, res) => {
   try {
-    const category = db.getById('categories', req.params.categoryId);
+    const category = db.getById('categories', req.params.categoryId, req.params.userId);
     
     if (!category || category.userId !== req.params.userId) {
       return res.status(404).json({ error: 'Category not found' });
@@ -56,6 +56,7 @@ router.get('/:categoryId', (req, res) => {
 router.post('/', (req, res) => {
   try {
     const { name, type, icon } = req.body;
+    const userId = req.params.userId;
     
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Name is required' });
@@ -69,7 +70,7 @@ router.post('/', (req, res) => {
     
     const category = {
       id: uuidv4(),
-      userId: req.params.userId,
+      userId: userId,
       name: name.trim(),
       type,
       icon: icon || (type === 'expense' ? '📋' : '💰'),
@@ -77,7 +78,7 @@ router.post('/', (req, res) => {
       updatedAt: now
     };
     
-    db.insert('categories', category);
+    db.insert('categories', category, userId);
     
     res.status(201).json(category);
   } catch (error) {
@@ -92,10 +93,11 @@ router.post('/', (req, res) => {
 router.put('/:categoryId', (req, res) => {
   try {
     const { name, type, icon } = req.body;
+    const userId = req.params.userId;
     
-    const existingCategory = db.getById('categories', req.params.categoryId);
+    const existingCategory = db.getById('categories', req.params.categoryId, userId);
     
-    if (!existingCategory || existingCategory.userId !== req.params.userId) {
+    if (!existingCategory || existingCategory.userId !== userId) {
       return res.status(404).json({ error: 'Category not found' });
     }
     
@@ -113,7 +115,7 @@ router.put('/:categoryId', (req, res) => {
       updates.icon = icon;
     }
     
-    const category = db.update('categories', req.params.categoryId, updates);
+    const category = db.update('categories', req.params.categoryId, updates, userId);
     
     res.json(category);
   } catch (error) {
@@ -127,18 +129,19 @@ router.put('/:categoryId', (req, res) => {
  */
 router.delete('/:categoryId', (req, res) => {
   try {
-    const category = db.getById('categories', req.params.categoryId);
+    const userId = req.params.userId;
+    const category = db.getById('categories', req.params.categoryId, userId);
     
-    if (!category || category.userId !== req.params.userId) {
+    if (!category || category.userId !== userId) {
       return res.status(404).json({ error: 'Category not found' });
     }
     
     // Check if category is used by any transactions
-    const transactions = db.getByUserId('transactions', req.params.userId);
+    const transactions = db.getAll('transactions', userId);
     const usedByTransactions = transactions.some(t => t.categoryId === req.params.categoryId);
     
     // Check if category is used by any recurring
-    const recurring = db.getByUserId('recurring', req.params.userId);
+    const recurring = db.getAll('recurring', userId);
     const usedByRecurring = recurring.some(r => r.categoryId === req.params.categoryId);
     
     if (usedByTransactions || usedByRecurring) {
@@ -148,7 +151,7 @@ router.delete('/:categoryId', (req, res) => {
       });
     }
     
-    db.remove('categories', req.params.categoryId);
+    db.remove('categories', req.params.categoryId, userId);
     
     res.json({ message: 'Category deleted successfully' });
   } catch (error) {

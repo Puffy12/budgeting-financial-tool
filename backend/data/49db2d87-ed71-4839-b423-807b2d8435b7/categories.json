@@ -1,0 +1,173 @@
+[
+  {
+    "id": "f08ab17d-92ae-4f6b-a9ea-28115351b641",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Groceries",
+    "type": "expense",
+    "icon": "🛒",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "3dcd93f8-ca82-4eb5-9623-599662f10769",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Rent",
+    "type": "expense",
+    "icon": "🏠",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "80fcda8e-0b4c-4ce6-b0c9-9d1e0f273be1",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Utilities",
+    "type": "expense",
+    "icon": "💡",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "29a49eec-6e7a-4e93-a4b8-51cbdcb367c0",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Transportation",
+    "type": "expense",
+    "icon": "🚗",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "286764fe-091f-4391-97c4-03de0e82a625",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Entertainment",
+    "type": "expense",
+    "icon": "🎬",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "c8269f65-89b9-4a48-987c-d20a09bdfe7a",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Dining Out",
+    "type": "expense",
+    "icon": "🍽️",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "751c16aa-3767-4675-92b2-ed8d0e0f7f97",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Healthcare",
+    "type": "expense",
+    "icon": "🏥",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "209ea1c7-bf71-498a-9412-94551bf5f945",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Shopping",
+    "type": "expense",
+    "icon": "🛍️",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "030c07cc-315d-4a29-9483-441a84b2853c",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Subscriptions",
+    "type": "expense",
+    "icon": "📱",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "9bc411a8-6f28-4f15-a6f2-49c7ae0b9c8e",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Insurance",
+    "type": "expense",
+    "icon": "🛡️",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "594d7340-0521-4d9c-8444-dc5e63f22730",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Education",
+    "type": "expense",
+    "icon": "📚",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "2f3d483c-85eb-4896-ac3a-52481428ec3e",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Personal Care",
+    "type": "expense",
+    "icon": "💅",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "d5556781-08d8-4e87-8fea-584da381447d",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Other Expense",
+    "type": "expense",
+    "icon": "📋",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "4ba8de82-b8b3-4d41-92a3-acf3a3ac6425",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Salary",
+    "type": "income",
+    "icon": "💰",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "8ccc428d-1582-43a1-a487-50af98229667",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Freelance",
+    "type": "income",
+    "icon": "💻",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "d21f6452-84fe-45c8-a082-d232eadd9b5c",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Investments",
+    "type": "income",
+    "icon": "📈",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "6bae6717-1e85-48e0-9600-389d09bcc7b1",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Gifts",
+    "type": "income",
+    "icon": "🎁",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "54d55f26-a2bd-42f2-b4f1-6d2cc99d158a",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Refunds",
+    "type": "income",
+    "icon": "💵",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  },
+  {
+    "id": "0fa76563-76e3-4979-af32-7de4890d5cb0",
+    "userId": "49db2d87-ed71-4839-b423-807b2d8435b7",
+    "name": "Other Income",
+    "type": "income",
+    "icon": "✨",
+    "createdAt": "2026-01-25T20:48:38.705Z",
+    "updatedAt": "2026-01-25T20:48:38.705Z"
+  }
+]

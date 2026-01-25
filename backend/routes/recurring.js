@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
-const { processSpecificRecurring, calculateNextDueDate } = require('../utils/recurringProcessor');
+const { processSpecificRecurring } = require('../utils/recurringProcessor');
 
 /**
  * Middleware to validate user exists
@@ -25,7 +25,8 @@ router.use(validateUser);
  */
 router.get('/', (req, res) => {
   try {
-    let recurring = db.getByUserId('recurring', req.params.userId);
+    const userId = req.params.userId;
+    let recurring = db.getAll('recurring', userId);
     const { type, isActive } = req.query;
     
     // Filter by type
@@ -43,7 +44,7 @@ router.get('/', (req, res) => {
     recurring.sort((a, b) => new Date(a.nextDueDate) - new Date(b.nextDueDate));
     
     // Include category info
-    const categories = db.getByUserId('categories', req.params.userId);
+    const categories = db.getAll('categories', userId);
     const recurringWithCategory = recurring.map(r => {
       const category = categories.find(c => c.id === r.categoryId);
       return {
@@ -64,14 +65,15 @@ router.get('/', (req, res) => {
  */
 router.get('/:recurringId', (req, res) => {
   try {
-    const recurring = db.getById('recurring', req.params.recurringId);
+    const userId = req.params.userId;
+    const recurring = db.getById('recurring', req.params.recurringId, userId);
     
-    if (!recurring || recurring.userId !== req.params.userId) {
+    if (!recurring || recurring.userId !== userId) {
       return res.status(404).json({ error: 'Recurring transaction not found' });
     }
     
     // Include category info
-    const category = db.getById('categories', recurring.categoryId);
+    const category = db.getById('categories', recurring.categoryId, userId);
     
     res.json({
       ...recurring,
@@ -89,6 +91,7 @@ router.get('/:recurringId', (req, res) => {
 router.post('/', (req, res) => {
   try {
     const { name, amount, type, categoryId, frequency, startDate, notes } = req.body;
+    const userId = req.params.userId;
     
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Name is required' });
@@ -111,8 +114,8 @@ router.post('/', (req, res) => {
     }
     
     // Validate category exists and belongs to user
-    const category = db.getById('categories', categoryId);
-    if (!category || category.userId !== req.params.userId) {
+    const category = db.getById('categories', categoryId, userId);
+    if (!category || category.userId !== userId) {
       return res.status(400).json({ error: 'Invalid category' });
     }
     
@@ -121,7 +124,7 @@ router.post('/', (req, res) => {
     
     const recurring = {
       id: uuidv4(),
-      userId: req.params.userId,
+      userId: userId,
       name: name.trim(),
       categoryId,
       amount: parseFloat(amount),
@@ -135,7 +138,7 @@ router.post('/', (req, res) => {
       updatedAt: now
     };
     
-    db.insert('recurring', recurring);
+    db.insert('recurring', recurring, userId);
     
     res.status(201).json({
       ...recurring,
@@ -153,10 +156,11 @@ router.post('/', (req, res) => {
 router.put('/:recurringId', (req, res) => {
   try {
     const { name, amount, type, categoryId, frequency, nextDueDate, notes, isActive } = req.body;
+    const userId = req.params.userId;
     
-    const existingRecurring = db.getById('recurring', req.params.recurringId);
+    const existingRecurring = db.getById('recurring', req.params.recurringId, userId);
     
-    if (!existingRecurring || existingRecurring.userId !== req.params.userId) {
+    if (!existingRecurring || existingRecurring.userId !== userId) {
       return res.status(404).json({ error: 'Recurring transaction not found' });
     }
     
@@ -178,8 +182,8 @@ router.put('/:recurringId', (req, res) => {
     }
     
     if (categoryId) {
-      const category = db.getById('categories', categoryId);
-      if (!category || category.userId !== req.params.userId) {
+      const category = db.getById('categories', categoryId, userId);
+      if (!category || category.userId !== userId) {
         return res.status(400).json({ error: 'Invalid category' });
       }
       updates.categoryId = categoryId;
@@ -201,10 +205,10 @@ router.put('/:recurringId', (req, res) => {
       updates.isActive = isActive;
     }
     
-    const recurring = db.update('recurring', req.params.recurringId, updates);
+    const recurring = db.update('recurring', req.params.recurringId, updates, userId);
     
     // Include category info
-    const category = db.getById('categories', recurring.categoryId);
+    const category = db.getById('categories', recurring.categoryId, userId);
     
     res.json({
       ...recurring,
@@ -221,13 +225,14 @@ router.put('/:recurringId', (req, res) => {
  */
 router.delete('/:recurringId', (req, res) => {
   try {
-    const recurring = db.getById('recurring', req.params.recurringId);
+    const userId = req.params.userId;
+    const recurring = db.getById('recurring', req.params.recurringId, userId);
     
-    if (!recurring || recurring.userId !== req.params.userId) {
+    if (!recurring || recurring.userId !== userId) {
       return res.status(404).json({ error: 'Recurring transaction not found' });
     }
     
-    db.remove('recurring', req.params.recurringId);
+    db.remove('recurring', req.params.recurringId, userId);
     
     res.json({ message: 'Recurring transaction deleted successfully' });
   } catch (error) {
@@ -241,7 +246,8 @@ router.delete('/:recurringId', (req, res) => {
  */
 router.post('/:recurringId/process', (req, res) => {
   try {
-    const result = processSpecificRecurring(req.params.recurringId);
+    const userId = req.params.userId;
+    const result = processSpecificRecurring(req.params.recurringId, userId);
     
     if (!result.success) {
       return res.status(400).json({ error: result.error });
