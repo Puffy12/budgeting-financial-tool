@@ -108,14 +108,88 @@ export const CATEGORY_ICONS: CategoryIconOption[] = [
   { id: 'wine', name: 'Drinks', icon: Wine },
 ]
 
+// Emoji to icon ID mapping for backward compatibility with existing categories
+const EMOJI_TO_ICON_MAP: Record<string, string> = {
+  '🛒': 'shopping-cart',
+  '🏠': 'home',
+  '💡': 'lightbulb',
+  '🚗': 'car',
+  '🎬': 'film',
+  '🍽️': 'utensils',
+  '🏥': 'stethoscope',
+  '🛍️': 'shopping-bag',
+  '📱': 'smartphone',
+  '🛡️': 'shield',
+  '📚': 'book',
+  '💅': 'sparkles',
+  '📋': 'folder',
+  '💰': 'wallet',
+  '💻': 'laptop',
+  '📈': 'trending-up',
+  '🎁': 'gift',
+  '💵': 'banknote',
+  '✨': 'star',
+  '🎮': 'gamepad',
+  '🏋️': 'dumbbell',
+  '✈️': 'plane',
+  '🎵': 'music',
+  '📸': 'camera',
+  '🐶': 'paw-print',
+  '🌿': 'leaf',
+  '☕': 'coffee',
+  '🍕': 'pizza',
+  '🎂': 'cake',
+  '💊': 'pill',
+  '🔧': 'wrench',
+  '👕': 'shirt',
+  '💎': 'gem',
+  '🎨': 'palette',
+  '📝': 'file-text',
+  '🏦': 'building',
+  '💳': 'credit-card',
+  '🎯': 'target',
+  '💼': 'briefcase',
+  '🎓': 'graduation-cap',
+  '❤️': 'heart',
+  '⚡': 'zap',
+  '📶': 'wifi',
+  '👶': 'baby',
+  '🚌': 'bus',
+  '⛽': 'fuel',
+  '✂️': 'scissors',
+  '🍷': 'wine',
+  '💸': 'wallet',
+  '🔄': 'trending-up',
+  '🏷️': 'folder',
+  '⚙️': 'folder',
+}
+
 // Map icon ID to Lucide icon component
+// Also handles emoji strings for backward compatibility
 export const getIconById = (iconId: string): LucideIcon => {
-  const found = CATEGORY_ICONS.find(i => i.id === iconId)
+  // First check if it's an emoji and map it to an icon ID
+  const mappedId = EMOJI_TO_ICON_MAP[iconId] || iconId
+  
+  // Find the icon by ID
+  const found = CATEGORY_ICONS.find(i => i.id === mappedId)
   return found?.icon || Folder
 }
 
 // Map icon ID to icon option
 export const getIconOptionById = (iconId: string): CategoryIconOption => {
-  const found = CATEGORY_ICONS.find(i => i.id === iconId)
+  // First check if it's an emoji and map it to an icon ID
+  const mappedId = EMOJI_TO_ICON_MAP[iconId] || iconId
+  
+  const found = CATEGORY_ICONS.find(i => i.id === mappedId)
   return found || { id: 'folder', name: 'Other', icon: Folder }
+}
+
+// Check if a string is an emoji (for detection)
+export const isEmoji = (str: string): boolean => {
+  return /\p{Emoji}/u.test(str) && str.length <= 4
+}
+
+// Convert emoji to icon ID if needed
+export const normalizeIconId = (iconId: string): string => {
+  return EMOJI_TO_ICON_MAP[iconId] || iconId
 }
