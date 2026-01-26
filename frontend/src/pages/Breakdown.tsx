@@ -15,6 +15,8 @@ import { useUser } from '../context/UserContext'
 import { useTheme } from '../context/ThemeContext'
 import { usersApi, categoriesApi } from '../api'
 import type { MonthlyData, Category } from '../types'
+import { getIconById } from '../utils/categoryIcons'
+import { Folder } from 'lucide-react'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
 
@@ -61,25 +63,54 @@ export default function Breakdown() {
   const chartColors = {
     income: '#10b981',
     expense: '#ef4444',
-    grid: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-    text: isDark ? '#94a3b8' : '#64748b',
+    grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: isDark ? '#52525e' : '#94a3b8',
   }
 
   const barChartData = {
     labels: monthlyData.map(m => `${m.month}`),
     datasets: [
-      { label: 'Income', data: monthlyData.map(m => m.income), backgroundColor: chartColors.income, borderRadius: 6 },
-      { label: 'Expenses', data: monthlyData.map(m => m.expenses), backgroundColor: chartColors.expense, borderRadius: 6 },
+      { label: 'Income', data: monthlyData.map(m => m.income), backgroundColor: chartColors.income, borderRadius: 8 },
+      { label: 'Expenses', data: monthlyData.map(m => m.expenses), backgroundColor: chartColors.expense, borderRadius: 8 },
     ],
   }
 
   const barChartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'top' as const, labels: { color: chartColors.text } } },
+    plugins: { 
+      legend: { 
+        position: 'top' as const, 
+        labels: { 
+          color: chartColors.text, 
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 20,
+          font: { size: 12, weight: 500 as const },
+        } 
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1a1a1e' : '#ffffff',
+        titleColor: isDark ? '#ffffff' : '#0f172a',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#242428' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 12,
+      },
+    },
     scales: {
-      y: { beginAtZero: true, grid: { color: chartColors.grid }, ticks: { color: chartColors.text, callback: (value: number | string) => '$' + value } },
-      x: { grid: { display: false }, ticks: { color: chartColors.text } },
+      y: { 
+        beginAtZero: true, 
+        grid: { color: chartColors.grid }, 
+        border: { display: false },
+        ticks: { color: chartColors.text, callback: (value: number | string) => '$' + value, font: { size: 11 } } 
+      },
+      x: { 
+        grid: { display: false }, 
+        border: { display: false },
+        ticks: { color: chartColors.text, font: { size: 11 } } 
+      },
     },
   }
 
@@ -96,13 +127,35 @@ export default function Breakdown() {
 
   const doughnutData = {
     labels: sortedCategories.map(([name]) => name),
-    datasets: [{ data: sortedCategories.map(([, amount]) => amount), backgroundColor: pieColors.slice(0, sortedCategories.length), borderWidth: 0 }],
+    datasets: [{ data: sortedCategories.map(([, amount]) => amount), backgroundColor: pieColors.slice(0, sortedCategories.length), borderWidth: 0, hoverOffset: 4 }],
   }
 
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    plugins: { legend: { position: 'right' as const, labels: { color: chartColors.text, boxWidth: 12, padding: 10 } } },
+    cutout: '65%',
+    plugins: { 
+      legend: { 
+        position: 'right' as const, 
+        labels: { 
+          color: chartColors.text, 
+          boxWidth: 10, 
+          padding: 10,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: { size: 11 },
+        } 
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1a1a1e' : '#ffffff',
+        titleColor: isDark ? '#ffffff' : '#0f172a',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#242428' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 12,
+      },
+    },
   }
 
   const totalIncome = monthlyData.reduce((sum, m) => sum + m.income, 0)
@@ -112,33 +165,40 @@ export default function Breakdown() {
   const avgExpenses = monthlyData.length > 0 ? totalExpenses / monthlyData.length : 0
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i)
 
+  // Helper to render category icon
+  const renderCategoryIcon = (iconId: string | undefined, className: string = '') => {
+    if (!iconId) return <Folder className={className} strokeWidth={1.75} />
+    const IconComponent = getIconById(iconId)
+    return <IconComponent className={className} strokeWidth={1.75} />
+  }
+
   return (
     <div className="p-4 pb-24 lg:p-8 lg:pb-8">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Breakdown</h1>
-        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Detailed financial analysis</p>
+      <div className="mb-8">
+        <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Breakdown</h1>
+        <p className={`mt-1 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Detailed financial analysis</p>
       </div>
 
       {/* View Mode & Filters */}
       <div className="mb-6 flex flex-wrap items-center gap-3">
-        <div className={`flex gap-2 rounded-xl p-1 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
+        <div className={`flex gap-1 rounded-xl p-1 ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
           <button
             onClick={() => setViewMode('monthly')}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               viewMode === 'monthly'
-                ? isDark ? 'bg-slate-600 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
-                : isDark ? 'text-slate-400' : 'text-slate-600'
+                ? isDark ? 'bg-[#242428] text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
+                : isDark ? 'text-[#52525e]' : 'text-slate-500'
             }`}
           >
             Monthly
           </button>
           <button
             onClick={() => setViewMode('yearly')}
-            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-all duration-200 ${
               viewMode === 'yearly'
-                ? isDark ? 'bg-slate-600 text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
-                : isDark ? 'text-slate-400' : 'text-slate-600'
+                ? isDark ? 'bg-[#242428] text-white shadow-sm' : 'bg-white text-slate-900 shadow-sm'
+                : isDark ? 'text-[#52525e]' : 'text-slate-500'
             }`}
           >
             Yearly
@@ -149,8 +209,8 @@ export default function Breakdown() {
           <select
             value={selectedMonths}
             onChange={(e) => setSelectedMonths(Number(e.target.value))}
-            className={`rounded-xl border px-4 py-2.5 text-sm ${
-              isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-600'
+            className={`rounded-xl border px-4 py-2.5 text-sm transition-all duration-200 ${
+              isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-white text-slate-700 focus:border-primary-500'
             }`}
           >
             <option value={1}>1 Month</option>
@@ -165,8 +225,8 @@ export default function Breakdown() {
           <select
             value={selectedYear}
             onChange={(e) => setSelectedYear(Number(e.target.value))}
-            className={`rounded-xl border px-4 py-2.5 text-sm ${
-              isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-600'
+            className={`rounded-xl border px-4 py-2.5 text-sm transition-all duration-200 ${
+              isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-white text-slate-700 focus:border-primary-500'
             }`}
           >
             {years.map((year) => (
@@ -178,93 +238,96 @@ export default function Breakdown() {
 
       {loading ? (
         <div className="flex h-48 items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
         </div>
       ) : (
         <>
           {/* Summary Cards */}
-          <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-green-500/10' : 'bg-green-50'}`}>
-              <p className={`text-xs font-medium ${isDark ? 'text-green-400' : 'text-green-600'}`}>Total Income</p>
-              <p className={`text-lg font-bold sm:text-xl ${isDark ? 'text-green-400' : 'text-green-700'}`}>{formatCurrency(totalIncome)}</p>
-              <p className={`mt-1 text-[10px] sm:text-xs ${isDark ? 'text-green-500/70' : 'text-green-600/70'}`}>Avg: {formatCurrency(avgIncome)}/mo</p>
+          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
+              className={`rounded-xl p-4 accent-income ${isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80'}`}>
+              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>Total Income</p>
+              <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{formatCurrency(totalIncome)}</p>
+              <p className={`mt-1 text-[10px] ${isDark ? 'text-emerald-500/50' : 'text-emerald-600/50'}`}>Avg: {formatCurrency(avgIncome)}/mo</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
-              <p className={`text-xs font-medium ${isDark ? 'text-red-400' : 'text-red-600'}`}>Total Expenses</p>
-              <p className={`text-lg font-bold sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalExpenses)}</p>
-              <p className={`mt-1 text-[10px] sm:text-xs ${isDark ? 'text-red-500/70' : 'text-red-600/70'}`}>Avg: {formatCurrency(avgExpenses)}/mo</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}
+              className={`rounded-xl p-4 accent-expense ${isDark ? 'bg-red-500/8' : 'bg-red-50/80'}`}>
+              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-red-400/70' : 'text-red-600/70'}`}>Total Expenses</p>
+              <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalExpenses)}</p>
+              <p className={`mt-1 text-[10px] ${isDark ? 'text-red-500/50' : 'text-red-600/50'}`}>Avg: {formatCurrency(avgExpenses)}/mo</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-slate-700' : 'bg-white border border-slate-200'}`}>
-              <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Net Savings</p>
-              <p className={`text-lg font-bold sm:text-xl ${totalDifference >= 0 ? isDark ? 'text-green-400' : 'text-green-700' : isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalDifference)}</p>
-              <p className={`mt-1 text-[10px] sm:text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Rate: {totalIncome > 0 ? ((totalDifference / totalIncome) * 100).toFixed(0) : 0}%</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
+              className={`rounded-xl p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
+              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Net Savings</p>
+              <p className={`mt-1 text-xl font-bold tabular-nums ${totalDifference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-700' : isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalDifference)}</p>
+              <p className={`mt-1 text-[10px] ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Rate: {totalIncome > 0 ? ((totalDifference / totalIncome) * 100).toFixed(0) : 0}%</p>
             </motion.div>
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-slate-700' : 'bg-white border border-slate-200'}`}>
-              <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Transactions</p>
-              <p className={`text-lg font-bold sm:text-xl ${isDark ? 'text-white' : 'text-slate-700'}`}>{monthlyData.reduce((sum, m) => sum + m.transactionCount, 0)}</p>
-              <p className={`mt-1 text-[10px] sm:text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Avg: {Math.round(monthlyData.reduce((sum, m) => sum + m.transactionCount, 0) / Math.max(monthlyData.length, 1))}/mo</p>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}
+              className={`rounded-xl p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
+              <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Transactions</p>
+              <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-white' : 'text-slate-700'}`}>{monthlyData.reduce((sum, m) => sum + m.transactionCount, 0)}</p>
+              <p className={`mt-1 text-[10px] ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Avg: {Math.round(monthlyData.reduce((sum, m) => sum + m.transactionCount, 0) / Math.max(monthlyData.length, 1))}/mo</p>
             </motion.div>
           </div>
 
           {/* Charts */}
-          <div className="mb-6 grid gap-4 lg:grid-cols-2 lg:gap-6">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-              <h2 className={`mb-4 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Income vs Expenses</h2>
+          <div className="mb-6 grid gap-6 lg:grid-cols-2">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
+              className={`card-hover rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
+              <h2 className={`mb-5 text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Income vs Expenses</h2>
               <div className="h-56 sm:h-64"><Bar data={barChartData} options={barChartOptions} /></div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-              <h2 className={`mb-4 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Expense Categories</h2>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}
+              className={`card-hover rounded-2xl border p-5 sm:p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
+              <h2 className={`mb-5 text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Expense Categories</h2>
               <div className="h-56 sm:h-64">
                 {sortedCategories.length > 0 ? (
                   <Doughnut data={doughnutData} options={doughnutOptions} />
                 ) : (
-                  <div className={`flex h-full items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>No expense data</div>
+                  <div className={`flex h-full flex-col items-center justify-center gap-3 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+                    <Folder className="h-10 w-10" strokeWidth={1.5} />
+                    <span className="text-sm">No expense data</span>
+                  </div>
                 )}
               </div>
             </motion.div>
           </div>
 
           {/* Monthly Table */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-            className={`rounded-2xl border shadow-sm ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-            <div className={`border-b px-4 py-4 sm:px-6 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-              <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Monthly Breakdown</h2>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.3 }}
+            className={`card-hover rounded-2xl border ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
+            <div className={`border-b px-5 py-4 sm:px-6 ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
+              <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Monthly Breakdown</h2>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className={`border-b ${isDark ? 'border-slate-700 bg-slate-700/50' : 'border-slate-200 bg-slate-50'}`}>
-                    <th className={`px-4 py-3 text-left text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Month</th>
-                    <th className={`px-4 py-3 text-right text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Income</th>
-                    <th className={`px-4 py-3 text-right text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Expenses</th>
-                    <th className={`px-4 py-3 text-right text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Net</th>
+                  <tr className={`border-b ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
+                    <th className={`px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Month</th>
+                    <th className={`px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Income</th>
+                    <th className={`px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Expenses</th>
+                    <th className={`px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Net</th>
                   </tr>
                 </thead>
-                <tbody className={`divide-y ${isDark ? 'divide-slate-700' : 'divide-slate-100'}`}>
+                <tbody className={`divide-y ${isDark ? 'divide-[#1a1a1e]' : 'divide-[#ede9d5]'}`}>
                   {monthlyData.map((month) => (
-                    <tr key={month.fullDate}>
-                      <td className={`px-4 py-3 font-medium sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{month.month} {month.year}</td>
-                      <td className={`px-4 py-3 text-right sm:px-6 ${isDark ? 'text-green-400' : 'text-green-600'}`}>{formatCurrency(month.income)}</td>
-                      <td className={`px-4 py-3 text-right sm:px-6 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(month.expenses)}</td>
-                      <td className={`px-4 py-3 text-right font-medium sm:px-6 ${month.difference >= 0 ? isDark ? 'text-green-400' : 'text-green-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>
+                    <tr key={month.fullDate} className={`transition-colors ${isDark ? 'hover:bg-[#1a1a1e]/50' : 'hover:bg-[#faf9f6]'}`}>
+                      <td className={`px-5 py-3.5 font-medium sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{month.month} {month.year}</td>
+                      <td className={`px-5 py-3.5 text-right tabular-nums sm:px-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatCurrency(month.income)}</td>
+                      <td className={`px-5 py-3.5 text-right tabular-nums sm:px-6 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(month.expenses)}</td>
+                      <td className={`px-5 py-3.5 text-right font-medium tabular-nums sm:px-6 ${month.difference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>
                         {formatCurrency(month.difference)}
                       </td>
                     </tr>
                   ))}
                 </tbody>
                 <tfoot>
-                  <tr className={isDark ? 'bg-slate-700/50' : 'bg-slate-50'}>
-                    <td className={`px-4 py-3 font-semibold sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Total</td>
-                    <td className={`px-4 py-3 text-right font-semibold sm:px-6 ${isDark ? 'text-green-400' : 'text-green-600'}`}>{formatCurrency(totalIncome)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold sm:px-6 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(totalExpenses)}</td>
-                    <td className={`px-4 py-3 text-right font-semibold sm:px-6 ${totalDifference >= 0 ? isDark ? 'text-green-400' : 'text-green-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>
+                  <tr className={isDark ? 'bg-[#1a1a1e]/30' : 'bg-[#faf9f6]'}>
+                    <td className={`px-5 py-3.5 font-semibold sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>Total</td>
+                    <td className={`px-5 py-3.5 text-right font-semibold tabular-nums sm:px-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatCurrency(totalIncome)}</td>
+                    <td className={`px-5 py-3.5 text-right font-semibold tabular-nums sm:px-6 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(totalExpenses)}</td>
+                    <td className={`px-5 py-3.5 text-right font-semibold tabular-nums sm:px-6 ${totalDifference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>
                       {formatCurrency(totalDifference)}
                     </td>
                   </tr>
@@ -275,34 +338,36 @@ export default function Breakdown() {
 
           {/* Category Breakdown */}
           {sortedCategories.length > 0 && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5 }}
-              className={`mt-6 rounded-2xl border shadow-sm ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
-              <div className={`border-b px-4 py-4 sm:px-6 ${isDark ? 'border-slate-700' : 'border-slate-200'}`}>
-                <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Category Breakdown</h2>
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.3 }}
+              className={`mt-6 card-hover rounded-2xl border ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
+              <div className={`border-b px-5 py-4 sm:px-6 ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
+                <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Category Breakdown</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
-                    <tr className={`border-b ${isDark ? 'border-slate-700 bg-slate-700/50' : 'border-slate-200 bg-slate-50'}`}>
-                      <th className={`px-4 py-3 text-left text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Category</th>
-                      <th className={`px-4 py-3 text-right text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>Total</th>
-                      <th className={`px-4 py-3 text-right text-xs font-semibold sm:px-6 sm:text-sm ${isDark ? 'text-slate-300' : 'text-slate-900'}`}>%</th>
+                    <tr className={`border-b ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
+                      <th className={`px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Category</th>
+                      <th className={`px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Total</th>
+                      <th className={`px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>%</th>
                     </tr>
                   </thead>
-                  <tbody className={`divide-y ${isDark ? 'divide-slate-700' : 'divide-slate-100'}`}>
+                  <tbody className={`divide-y ${isDark ? 'divide-[#1a1a1e]' : 'divide-[#ede9d5]'}`}>
                     {sortedCategories.map(([name, amount], idx) => {
                       const category = categories.find(c => c.name === name)
                       return (
-                        <tr key={name}>
-                          <td className="px-4 py-3 sm:px-6">
+                        <tr key={name} className={`transition-colors ${isDark ? 'hover:bg-[#1a1a1e]/50' : 'hover:bg-[#faf9f6]'}`}>
+                          <td className="px-5 py-3.5 sm:px-6">
                             <div className="flex items-center gap-3">
-                              <span className="h-3 w-3 rounded-full" style={{ backgroundColor: pieColors[idx % pieColors.length] }} />
-                              <span className="text-xl">{category?.icon || '📋'}</span>
+                              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: pieColors[idx % pieColors.length] }} />
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
+                                {renderCategoryIcon(category?.icon, `h-4 w-4 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`)}
+                              </div>
                               <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{name}</span>
                             </div>
                           </td>
-                          <td className={`px-4 py-3 text-right sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(amount)}</td>
-                          <td className={`px-4 py-3 text-right sm:px-6 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                          <td className={`px-5 py-3.5 text-right tabular-nums sm:px-6 ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(amount)}</td>
+                          <td className={`px-5 py-3.5 text-right tabular-nums sm:px-6 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
                             {totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : 0}%
                           </td>
                         </tr>

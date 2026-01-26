@@ -1,11 +1,12 @@
 import { motion } from 'framer-motion'
 import { useTheme } from '../context/ThemeContext'
+import { LucideIcon } from 'lucide-react'
 
 interface StatCardProps {
   title: string
   value: string | number
   subtitle?: string
-  icon?: string
+  icon?: LucideIcon
   trend?: {
     value: number
     isPositive: boolean
@@ -18,7 +19,7 @@ export default function StatCard({
   title,
   value,
   subtitle,
-  icon,
+  icon: Icon,
   trend,
   color = 'slate',
   delay = 0,
@@ -28,24 +29,32 @@ export default function StatCard({
 
   const colorClasses = {
     green: {
-      bg: isDark ? 'bg-green-500/10' : 'bg-green-50',
-      text: isDark ? 'text-green-400' : 'text-green-600',
-      icon: isDark ? 'bg-green-500/20' : 'bg-green-100',
+      bg: isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80',
+      text: isDark ? 'text-emerald-400' : 'text-emerald-600',
+      icon: isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-600',
+      border: isDark ? 'border-emerald-500/10' : 'border-emerald-100',
+      accent: 'accent-income',
     },
     red: {
-      bg: isDark ? 'bg-red-500/10' : 'bg-red-50',
+      bg: isDark ? 'bg-red-500/8' : 'bg-red-50/80',
       text: isDark ? 'text-red-400' : 'text-red-600',
-      icon: isDark ? 'bg-red-500/20' : 'bg-red-100',
+      icon: isDark ? 'bg-red-500/15 text-red-400' : 'bg-red-100 text-red-600',
+      border: isDark ? 'border-red-500/10' : 'border-red-100',
+      accent: 'accent-expense',
     },
     blue: {
-      bg: isDark ? 'bg-blue-500/10' : 'bg-blue-50',
+      bg: isDark ? 'bg-blue-500/8' : 'bg-blue-50/80',
       text: isDark ? 'text-blue-400' : 'text-blue-600',
-      icon: isDark ? 'bg-blue-500/20' : 'bg-blue-100',
+      icon: isDark ? 'bg-blue-500/15 text-blue-400' : 'bg-blue-100 text-blue-600',
+      border: isDark ? 'border-blue-500/10' : 'border-blue-100',
+      accent: 'accent-primary',
     },
     slate: {
-      bg: isDark ? 'bg-slate-700' : 'bg-slate-50',
-      text: isDark ? 'text-slate-300' : 'text-slate-600',
-      icon: isDark ? 'bg-slate-600' : 'bg-slate-100',
+      bg: isDark ? 'bg-[#1a1a1e]' : 'bg-white',
+      text: isDark ? 'text-slate-200' : 'text-slate-700',
+      icon: isDark ? 'bg-[#242428] text-[#52525e]' : 'bg-[#f5f5dc]/60 text-slate-500',
+      border: isDark ? 'border-[#242428]' : 'border-[#ede9d5]',
+      accent: '',
     },
   }
 
@@ -55,39 +64,45 @@ export default function StatCard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay }}
-      className={`rounded-2xl border p-4 shadow-sm sm:p-5 ${
-        isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
-      }`}
+      transition={{ delay, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className={`card-hover relative overflow-hidden rounded-2xl border p-4 sm:p-5 ${
+        isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
+      } ${colors.accent}`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
-          <p className={`text-xs font-medium sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-[#52525e]' : 'text-slate-400'}`}>
             {title}
           </p>
-          <p className={`mt-1.5 text-xl font-bold truncate sm:mt-2 sm:text-2xl ${colors.text}`}>
+          <p className={`mt-2 text-2xl font-bold tracking-tight truncate sm:text-3xl ${colors.text}`}>
             {value}
           </p>
           {subtitle && (
-            <p className={`mt-1 text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+            <p className={`mt-1 text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
               {subtitle}
             </p>
           )}
           {trend && (
-            <div className={`mt-2 inline-flex items-center gap-1 text-xs font-medium ${
+            <div className={`mt-2.5 inline-flex items-center gap-1.5 text-xs font-medium ${
               trend.isPositive
-                ? isDark ? 'text-green-400' : 'text-green-600'
+                ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                 : isDark ? 'text-red-400' : 'text-red-600'
             }`}>
-              <span>{trend.isPositive ? '↑' : '↓'}</span>
+              <span className={`flex h-4 w-4 items-center justify-center rounded-full ${
+                trend.isPositive
+                  ? isDark ? 'bg-emerald-500/15' : 'bg-emerald-100'
+                  : isDark ? 'bg-red-500/15' : 'bg-red-100'
+              }`}>
+                {trend.isPositive ? '↑' : '↓'}
+              </span>
               <span>{Math.abs(trend.value)}%</span>
-              <span className={isDark ? 'text-slate-500' : 'text-slate-400'}>vs last month</span>
+              <span className={isDark ? 'text-[#3d3d45]' : 'text-slate-400'}>vs last month</span>
             </div>
           )}
         </div>
-        {icon && (
-          <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${colors.icon}`}>
-            <span className="text-xl sm:text-2xl">{icon}</span>
+        {Icon && (
+          <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${colors.icon}`}>
+            <Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.75} />
           </div>
         )}
       </div>

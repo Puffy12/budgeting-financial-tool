@@ -4,6 +4,14 @@ import { useUser } from '../context/UserContext'
 import { useTheme } from '../context/ThemeContext'
 import { recurringApi, categoriesApi } from '../api'
 import type { RecurringTransaction, Category, Frequency } from '../types'
+import { getIconById } from '../utils/categoryIcons'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Play,
+  Folder,
+} from 'lucide-react'
 
 const FREQUENCY_LABELS: Record<Frequency, string> = {
   weekly: 'Weekly',
@@ -176,41 +184,49 @@ export default function Recurring() {
       return sum + (r.amount * (multiplier[r.frequency] || 1))
     }, 0)
 
+  // Helper to render category icon
+  const renderCategoryIcon = (iconId: string | undefined, className: string = '') => {
+    if (!iconId) return <Folder className={className} strokeWidth={1.75} />
+    const IconComponent = getIconById(iconId)
+    return <IconComponent className={className} strokeWidth={1.75} />
+  }
+
   return (
     <div className="p-4 pb-24 lg:p-8 lg:pb-8">
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Recurring</h1>
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Manage recurring income and expenses</p>
+          <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Recurring</h1>
+          <p className={`mt-1 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Manage recurring income and expenses</p>
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-3 font-medium text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl active:scale-[0.98]"
+          className="btn-premium inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-3 font-medium text-white shadow-lg shadow-primary-500/25"
         >
-          <span>+</span> Add Recurring
+          <Plus className="h-5 w-5" strokeWidth={2} />
+          Add Recurring
         </button>
       </div>
 
       {/* Summary */}
       <div className="mb-6 grid grid-cols-3 gap-3">
-        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-red-500/10' : 'bg-red-50'}`}>
-          <p className={`text-xs font-medium sm:text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>Expenses/mo</p>
-          <p className={`text-lg font-bold sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
+        <div className={`rounded-xl p-3 sm:p-4 accent-expense ${isDark ? 'bg-red-500/8' : 'bg-red-50/80'}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-red-400/70' : 'text-red-600/70'}`}>Expenses/mo</p>
+          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
             {formatCurrency(totalMonthlyExpenses)}
           </p>
         </div>
-        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-green-500/10' : 'bg-green-50'}`}>
-          <p className={`text-xs font-medium sm:text-sm ${isDark ? 'text-green-400' : 'text-green-600'}`}>Income/mo</p>
-          <p className={`text-lg font-bold sm:text-xl ${isDark ? 'text-green-400' : 'text-green-700'}`}>
+        <div className={`rounded-xl p-3 sm:p-4 accent-income ${isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80'}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>Income/mo</p>
+          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
             {formatCurrency(totalMonthlyIncome)}
           </p>
         </div>
-        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-slate-700' : 'bg-white border border-slate-200'}`}>
-          <p className={`text-xs font-medium sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>Net/mo</p>
-          <p className={`text-lg font-bold sm:text-xl ${
+        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
+          <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Net/mo</p>
+          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${
             totalMonthlyIncome - totalMonthlyExpenses >= 0
-              ? isDark ? 'text-green-400' : 'text-green-700'
+              ? isDark ? 'text-emerald-400' : 'text-emerald-700'
               : isDark ? 'text-red-400' : 'text-red-700'
           }`}>
             {formatCurrency(totalMonthlyIncome - totalMonthlyExpenses)}
@@ -224,12 +240,12 @@ export default function Recurring() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+            className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
               filter === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                 : isDark
-                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-[#1a1a1e] text-[#52525e] hover:bg-[#242428] hover:text-white'
+                : 'bg-white text-slate-500 hover:bg-[#f5f5dc] hover:text-slate-900 border border-[#ede9d5]'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -240,7 +256,7 @@ export default function Recurring() {
       {/* List */}
       {loading ? (
         <div className="flex h-48 items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
         </div>
       ) : filteredRecurring.length > 0 ? (
         <div className="space-y-3">
@@ -249,38 +265,38 @@ export default function Recurring() {
               key={rec.id}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
-              className={`rounded-xl border p-4 transition-all ${
+              transition={{ delay: index * 0.03, duration: 0.3 }}
+              className={`card-hover rounded-xl border p-4 transition-all ${
                 rec.isActive
-                  ? isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
-                  : isDark ? 'border-slate-700 bg-slate-800/50 opacity-60' : 'border-slate-100 bg-slate-50 opacity-60'
+                  ? isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
+                  : isDark ? 'border-[#1a1a1e] bg-[#121214]/50 opacity-60' : 'border-[#ede9d5] bg-[#faf9f6] opacity-60'
               }`}
             >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-3">
-                  <span className={`flex h-12 w-12 items-center justify-center rounded-xl text-2xl ${
+                  <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${
                     rec.type === 'expense'
-                      ? isDark ? 'bg-red-500/20' : 'bg-red-50'
-                      : isDark ? 'bg-green-500/20' : 'bg-green-50'
+                      ? isDark ? 'bg-red-500/15 text-red-400' : 'bg-red-50 text-red-600'
+                      : isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
                   }`}>
-                    {rec.category?.icon || '📋'}
-                  </span>
+                    {renderCategoryIcon(rec.category?.icon, 'h-6 w-6')}
+                  </div>
                   <div className="min-w-0">
                     <p className={`font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{rec.name}</p>
-                    <p className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    <p className={`text-sm ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
                       {rec.category?.name} · {FREQUENCY_LABELS[rec.frequency]}
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                      Next: {new Date(rec.nextDueDate).toLocaleDateString()}
+                    <p className={`text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+                      Next: {new Date(rec.nextDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 sm:justify-end">
-                  <p className={`text-xl font-bold ${
+                  <p className={`text-xl font-bold tabular-nums ${
                     rec.type === 'expense'
                       ? isDark ? 'text-red-400' : 'text-red-600'
-                      : isDark ? 'text-green-400' : 'text-green-600'
+                      : isDark ? 'text-emerald-400' : 'text-emerald-600'
                   }`}>
                     {rec.type === 'expense' ? '-' : '+'}
                     {formatCurrency(rec.amount)}
@@ -289,45 +305,38 @@ export default function Recurring() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleToggleActive(rec)}
-                      className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all ${
+                      className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-200 ${
                         rec.isActive
-                          ? isDark ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
-                          : isDark ? 'bg-slate-600 text-slate-400' : 'bg-slate-100 text-slate-600'
+                          ? isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
+                          : isDark ? 'bg-[#242428] text-[#3d3d45]' : 'bg-slate-100 text-slate-500'
                       }`}
                     >
                       {rec.isActive ? 'Active' : 'Off'}
                     </button>
                     <button
                       onClick={() => handleProcess(rec.id)}
-                      className={`rounded-lg p-2 transition-colors ${
-                        isDark ? 'text-slate-400 hover:bg-blue-500/20 hover:text-blue-400' : 'text-slate-400 hover:bg-blue-50 hover:text-blue-600'
+                      className={`rounded-lg p-2 transition-all duration-200 ${
+                        isDark ? 'text-[#3d3d45] hover:bg-blue-500/15 hover:text-blue-400' : 'text-slate-400 hover:bg-blue-50 hover:text-blue-600'
                       }`}
                       title="Create transaction now"
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                      <Play className="h-4 w-4" strokeWidth={1.75} />
                     </button>
                     <button
                       onClick={() => openEditModal(rec)}
-                      className={`rounded-lg p-2 transition-colors ${
-                        isDark ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                      className={`rounded-lg p-2 transition-all duration-200 ${
+                        isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                       }`}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                      </svg>
+                      <Pencil className="h-4 w-4" strokeWidth={1.75} />
                     </button>
                     <button
                       onClick={() => handleDelete(rec.id)}
-                      className={`rounded-lg p-2 transition-colors ${
-                        isDark ? 'text-slate-400 hover:bg-red-500/20 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                      className={`rounded-lg p-2 transition-all duration-200 ${
+                        isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                       }`}
                     >
-                      <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                     </button>
                   </div>
                 </div>
@@ -336,10 +345,11 @@ export default function Recurring() {
           ))}
         </div>
       ) : (
-        <div className={`rounded-2xl border py-16 text-center ${
-          isDark ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-slate-200 bg-white text-slate-500'
+        <div className={`flex flex-col items-center justify-center gap-3 rounded-2xl border py-16 ${
+          isDark ? 'border-[#1a1a1e] bg-[#121214] text-[#3d3d45]' : 'border-[#ede9d5] bg-white text-slate-400'
         }`}>
-          No recurring transactions yet.
+          <Folder className="h-10 w-10" strokeWidth={1.5} />
+          <span className="text-sm">No recurring transactions yet.</span>
         </div>
       )}
 
@@ -360,24 +370,24 @@ export default function Recurring() {
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className={`fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-3xl p-6 safe-area-bottom sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl ${
-                isDark ? 'bg-slate-800' : 'bg-white'
+                isDark ? 'bg-[#121214]' : 'bg-white'
               }`}
             >
-              <div className="absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-300 sm:hidden" />
+              <div className={`absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full sm:hidden ${isDark ? 'bg-[#242428]' : 'bg-slate-200'}`} />
               
-              <h2 className={`mb-6 pt-2 text-xl font-semibold sm:pt-0 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`mb-6 pt-2 text-xl font-semibold tracking-tight sm:pt-0 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {editingRecurring ? 'Edit Recurring' : 'Add Recurring'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Type Toggle */}
-                <div className={`flex gap-2 rounded-xl p-1 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                <div className={`flex gap-1 rounded-xl p-1 ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'expense', categoryId: '' })}
-                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all duration-200 ${
                       formData.type === 'expense'
-                        ? isDark ? 'bg-slate-600 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm'
-                        : isDark ? 'text-slate-400' : 'text-slate-600'
+                        ? isDark ? 'bg-[#242428] text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm'
+                        : isDark ? 'text-[#52525e]' : 'text-slate-500'
                     }`}
                   >
                     Expense
@@ -385,10 +395,10 @@ export default function Recurring() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'income', categoryId: '' })}
-                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all duration-200 ${
                       formData.type === 'income'
-                        ? isDark ? 'bg-slate-600 text-green-400 shadow-sm' : 'bg-white text-green-600 shadow-sm'
-                        : isDark ? 'text-slate-400' : 'text-slate-600'
+                        ? isDark ? 'bg-[#242428] text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm'
+                        : isDark ? 'text-[#52525e]' : 'text-slate-500'
                     }`}
                   >
                     Income
@@ -398,28 +408,28 @@ export default function Recurring() {
                 {/* Name & Amount */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Name</label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Name</label>
                     <input
                       type="text"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                        isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                      className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                        isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                       }`}
                       placeholder="Netflix"
                       required
                     />
                   </div>
                   <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Amount</label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Amount</label>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                        isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                      className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                        isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                       }`}
                       placeholder="0.00"
                       required
@@ -430,28 +440,28 @@ export default function Recurring() {
                 {/* Category & Frequency */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Category</label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Category</label>
                     <select
                       value={formData.categoryId}
                       onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                        isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                      className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                        isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                       }`}
                       required
                     >
                       <option value="">Select</option>
                       {filteredCategories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.icon} {cat.name}</option>
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Frequency</label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Frequency</label>
                     <select
                       value={formData.frequency}
                       onChange={(e) => setFormData({ ...formData, frequency: e.target.value as Frequency })}
-                      className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                        isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                      className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                        isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                       }`}
                       required
                     >
@@ -465,13 +475,13 @@ export default function Recurring() {
                 {/* Start Date (only for new) */}
                 {!editingRecurring && (
                   <div>
-                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Start Date</label>
+                    <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Start Date</label>
                     <input
                       type="date"
                       value={formData.startDate}
                       onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                      className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                        isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                      className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                        isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                       }`}
                       required
                     />
@@ -480,13 +490,13 @@ export default function Recurring() {
 
                 {/* Notes */}
                 <div>
-                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Notes (optional)</label>
+                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Notes (optional)</label>
                   <input
                     type="text"
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3 transition-colors ${
-                      isDark ? 'border-slate-600 bg-slate-700 text-white placeholder:text-slate-500' : 'border-slate-200 bg-white text-slate-900 placeholder:text-slate-400'
+                    className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${
+                      isDark ? 'border-[#242428] bg-[#1a1a1e] text-white placeholder:text-[#3d3d45] focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 placeholder:text-slate-400 focus:border-primary-500'
                     }`}
                     placeholder="Add a note..."
                   />
@@ -497,15 +507,15 @@ export default function Recurring() {
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className={`flex-1 rounded-xl border py-3.5 font-medium transition-all active:scale-[0.98] ${
-                      isDark ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    className={`flex-1 rounded-xl border py-3.5 font-medium transition-all duration-200 active:scale-[0.98] ${
+                      isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-500 hover:bg-[#f5f5dc]'
                     }`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 py-3.5 font-medium text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl active:scale-[0.98]"
+                    className="btn-premium flex-1 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 py-3.5 font-medium text-white shadow-lg shadow-primary-500/25"
                   >
                     {editingRecurring ? 'Update' : 'Add'}
                   </button>

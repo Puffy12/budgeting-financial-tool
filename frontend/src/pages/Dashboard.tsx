@@ -19,6 +19,15 @@ import { useTheme } from '../context/ThemeContext'
 import { usersApi, transactionsApi } from '../api'
 import StatCard from '../components/StatCard'
 import type { Summary, ComparisonData, Transaction } from '../types'
+import {
+  Wallet,
+  CreditCard,
+  TrendingUp,
+  TrendingDown,
+  RefreshCw,
+  ArrowRight,
+  Folder,
+} from 'lucide-react'
 
 ChartJS.register(
   CategoryScale,
@@ -79,8 +88,8 @@ export default function Dashboard() {
   const chartColors = {
     income: '#10b981',
     expense: '#ef4444',
-    grid: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-    text: isDark ? '#94a3b8' : '#64748b',
+    grid: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+    text: isDark ? '#52525e' : '#94a3b8',
   }
 
   const lineChartData = {
@@ -90,21 +99,27 @@ export default function Dashboard() {
         label: 'Income',
         data: comparison.map(c => c.income),
         borderColor: chartColors.income,
-        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.15)' : 'rgba(16, 185, 129, 0.1)',
+        backgroundColor: isDark ? 'rgba(16, 185, 129, 0.1)' : 'rgba(16, 185, 129, 0.08)',
         fill: true,
         tension: 0.4,
         pointRadius: 4,
         pointHoverRadius: 6,
+        pointBackgroundColor: chartColors.income,
+        pointBorderColor: isDark ? '#121214' : '#ffffff',
+        pointBorderWidth: 2,
       },
       {
         label: 'Expenses',
         data: comparison.map(c => c.expenses),
         borderColor: chartColors.expense,
-        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : 'rgba(239, 68, 68, 0.1)',
+        backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.08)',
         fill: true,
         tension: 0.4,
         pointRadius: 4,
         pointHoverRadius: 6,
+        pointBackgroundColor: chartColors.expense,
+        pointBorderColor: isDark ? '#121214' : '#ffffff',
+        pointBorderWidth: 2,
       },
     ],
   }
@@ -115,21 +130,41 @@ export default function Dashboard() {
     plugins: {
       legend: {
         position: 'top' as const,
-        labels: { color: chartColors.text },
+        labels: { 
+          color: chartColors.text,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          padding: 20,
+          font: { size: 12, weight: 500 as const },
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1a1a1e' : '#ffffff',
+        titleColor: isDark ? '#ffffff' : '#0f172a',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#242428' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 12,
+        displayColors: true,
+        usePointStyle: true,
       },
     },
     scales: {
       y: {
         beginAtZero: true,
         grid: { color: chartColors.grid },
+        border: { display: false },
         ticks: {
           color: chartColors.text,
           callback: (value: number | string) => '$' + value,
+          font: { size: 11 },
         },
       },
       x: {
         grid: { display: false },
-        ticks: { color: chartColors.text },
+        border: { display: false },
+        ticks: { color: chartColors.text, font: { size: 11 } },
       },
     },
   }
@@ -155,6 +190,7 @@ export default function Dashboard() {
         data: Object.values(expensesByCategory),
         backgroundColor: pieColors,
         borderWidth: 0,
+        hoverOffset: 4,
       },
     ],
   }
@@ -162,10 +198,27 @@ export default function Dashboard() {
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    cutout: '65%',
     plugins: {
       legend: {
         position: 'right' as const,
-        labels: { color: chartColors.text, boxWidth: 12, padding: 12 },
+        labels: { 
+          color: chartColors.text, 
+          boxWidth: 10, 
+          padding: 12,
+          usePointStyle: true,
+          pointStyle: 'circle',
+          font: { size: 11 },
+        },
+      },
+      tooltip: {
+        backgroundColor: isDark ? '#1a1a1e' : '#ffffff',
+        titleColor: isDark ? '#ffffff' : '#0f172a',
+        bodyColor: isDark ? '#94a3b8' : '#64748b',
+        borderColor: isDark ? '#242428' : '#e2e8f0',
+        borderWidth: 1,
+        padding: 12,
+        cornerRadius: 12,
       },
     },
   }
@@ -173,7 +226,7 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
       </div>
     )
   }
@@ -181,39 +234,39 @@ export default function Dashboard() {
   return (
     <div className="p-4 pb-24 lg:p-8 lg:pb-8">
       {/* Header */}
-      <div className="mb-6">
+      <div className="mb-8">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`text-2xl font-bold lg:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}
+          className={`text-2xl font-bold tracking-tight lg:text-3xl ${isDark ? 'text-white' : 'text-slate-900'}`}
         >
           Dashboard
         </motion.h1>
-        <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>
+        <p className={`mt-1 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
           Welcome back, {currentUser?.name}
         </p>
       </div>
 
       {/* Stats Grid */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
           title="Income"
           value={formatCurrency(summary?.currentMonth.income || 0)}
-          icon="💰"
+          icon={Wallet}
           color="green"
           delay={0}
         />
         <StatCard
           title="Expenses"
           value={formatCurrency(summary?.currentMonth.expenses || 0)}
-          icon="💸"
+          icon={CreditCard}
           color="red"
           delay={0.1}
         />
         <StatCard
           title="Balance"
           value={formatCurrency(summary?.currentMonth.difference || 0)}
-          icon={summary?.currentMonth.difference && summary.currentMonth.difference >= 0 ? '📈' : '📉'}
+          icon={summary?.currentMonth.difference && summary.currentMonth.difference >= 0 ? TrendingUp : TrendingDown}
           color={summary?.currentMonth.difference && summary.currentMonth.difference >= 0 ? 'green' : 'red'}
           delay={0.2}
         />
@@ -221,34 +274,34 @@ export default function Dashboard() {
           title="Recurring"
           value={formatCurrency(summary?.recurring.monthlyExpenses || 0)}
           subtitle={`${summary?.recurring.count || 0} items`}
-          icon="🔄"
+          icon={RefreshCw}
           color="blue"
           delay={0.3}
         />
       </div>
 
       {/* Charts Row */}
-      <div className="mb-6 grid gap-4 lg:grid-cols-2 lg:gap-6">
+      <div className="mb-8 grid gap-6 lg:grid-cols-2">
         {/* Line Chart */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${
-            isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+          transition={{ delay: 0.2, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className={`card-hover rounded-2xl border p-5 sm:p-6 ${
+            isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
           }`}
         >
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
               Income vs Expenses
             </h2>
             <select
               value={comparisonMonths}
               onChange={(e) => setComparisonMonths(Number(e.target.value))}
-              className={`rounded-lg border px-3 py-2 text-sm ${
+              className={`rounded-xl border px-3 py-2 text-sm transition-all ${
                 isDark
-                  ? 'border-slate-600 bg-slate-700 text-white'
-                  : 'border-slate-200 bg-white text-slate-600'
+                  ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500'
+                  : 'border-[#ede9d5] bg-[#faf9f6] text-slate-700 focus:border-primary-500'
               }`}
             >
               <option value={1}>1 Month</option>
@@ -267,20 +320,21 @@ export default function Dashboard() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          className={`rounded-2xl border p-4 shadow-sm sm:p-6 ${
-            isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+          transition={{ delay: 0.3, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className={`card-hover rounded-2xl border p-5 sm:p-6 ${
+            isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
           }`}
         >
-          <h2 className={`mb-4 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          <h2 className={`mb-5 text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Expense Categories
           </h2>
           <div className="h-56 sm:h-64">
             {Object.keys(expensesByCategory).length > 0 ? (
               <Doughnut data={doughnutData} options={doughnutOptions} />
             ) : (
-              <div className={`flex h-full items-center justify-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-                No expense data yet
+              <div className={`flex h-full flex-col items-center justify-center gap-3 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+                <Folder className="h-10 w-10" strokeWidth={1.5} />
+                <span className="text-sm">No expense data yet</span>
               </div>
             )}
           </div>
@@ -291,56 +345,57 @@ export default function Dashboard() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className={`rounded-2xl border shadow-sm ${
-          isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+        transition={{ delay: 0.4, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        className={`card-hover rounded-2xl border ${
+          isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
         }`}
       >
-        <div className={`flex items-center justify-between border-b px-4 py-4 sm:px-6 ${
-          isDark ? 'border-slate-700' : 'border-slate-200'
+        <div className={`flex items-center justify-between border-b px-5 py-4 sm:px-6 ${
+          isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'
         }`}>
-          <h2 className={`text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
+          <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
             Recent Transactions
           </h2>
           <Link
             to="/app/transactions"
-            className="text-sm font-medium text-primary-500 hover:text-primary-600"
+            className="flex items-center gap-1.5 text-sm font-medium text-primary-500 transition-colors hover:text-primary-600"
           >
             View All
+            <ArrowRight className="h-4 w-4" strokeWidth={2} />
           </Link>
         </div>
         
         {recentTransactions.length > 0 ? (
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
+          <div className={`divide-y ${isDark ? 'divide-[#1a1a1e]' : 'divide-[#ede9d5]'}`}>
             {recentTransactions.map((transaction, index) => (
               <motion.div
                 key={transaction.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.4 + index * 0.05 }}
-                className={`flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 ${
-                  isDark ? 'hover:bg-slate-700/50' : 'hover:bg-slate-50'
+                transition={{ delay: 0.4 + index * 0.05, duration: 0.3 }}
+                className={`flex items-center justify-between px-5 py-4 transition-colors sm:px-6 ${
+                  isDark ? 'hover:bg-[#1a1a1e]/50' : 'hover:bg-[#faf9f6]'
                 }`}
               >
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl shadow-sm sm:h-11 sm:w-11 ${
-                    isDark ? 'bg-slate-700' : 'bg-white'
+                <div className="flex items-center gap-4">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg ${
+                    isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'
                   }`}>
-                    {transaction.category?.icon || '📋'}
+                    {transaction.category?.icon || <Folder className="h-5 w-5 text-slate-400" strokeWidth={1.75} />}
                   </div>
                   <div className="min-w-0">
                     <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                       {transaction.category?.name || 'Unknown'}
                     </p>
-                    <p className={`text-xs truncate sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {new Date(transaction.date).toLocaleDateString()}
+                    <p className={`text-xs truncate ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+                      {new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       {transaction.notes && ` · ${transaction.notes}`}
                     </p>
                   </div>
                 </div>
-                <p className={`font-semibold whitespace-nowrap ${
+                <p className={`font-semibold tabular-nums whitespace-nowrap ${
                   transaction.type === 'income'
-                    ? isDark ? 'text-green-400' : 'text-green-600'
+                    ? isDark ? 'text-emerald-400' : 'text-emerald-600'
                     : isDark ? 'text-red-400' : 'text-red-600'
                 }`}>
                   {transaction.type === 'income' ? '+' : '-'}
@@ -350,8 +405,9 @@ export default function Dashboard() {
             ))}
           </div>
         ) : (
-          <div className={`py-12 text-center ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
-            No transactions yet. Use Quick Add to create one!
+          <div className={`flex flex-col items-center justify-center gap-3 py-16 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+            <Folder className="h-10 w-10" strokeWidth={1.5} />
+            <span className="text-sm">No transactions yet. Use Quick Add to create one!</span>
           </div>
         )}
       </motion.div>

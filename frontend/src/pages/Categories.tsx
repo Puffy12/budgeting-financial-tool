@@ -4,12 +4,15 @@ import { useUser } from '../context/UserContext'
 import { useTheme } from '../context/ThemeContext'
 import { categoriesApi } from '../api'
 import type { Category } from '../types'
-
-const EMOJI_OPTIONS = [
-  '🛒', '🏠', '💡', '🚗', '🎬', '🍽️', '🏥', '🛍️', '📱', '🛡️', '📚', '💅', '📋',
-  '💰', '💻', '📈', '🎁', '💵', '✨', '🎮', '🏋️', '✈️', '🎵', '📸', '🐶', '🌿',
-  '☕', '🍕', '🎂', '💊', '🔧', '👕', '💎', '🎨', '📝', '🏦', '💳', '🎯'
-]
+import { CATEGORY_ICONS, getIconById } from '../utils/categoryIcons'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Folder,
+} from 'lucide-react'
 
 export default function Categories() {
   const { currentUser } = useUser()
@@ -26,7 +29,7 @@ export default function Categories() {
   const [formData, setFormData] = useState({
     name: '',
     type: 'expense' as 'income' | 'expense',
-    icon: '📋',
+    icon: 'folder',
   })
 
   useEffect(() => {
@@ -50,7 +53,7 @@ export default function Categories() {
 
   const openCreateModal = () => {
     setEditingCategory(null)
-    setFormData({ name: '', type: 'expense', icon: '📋' })
+    setFormData({ name: '', type: 'expense', icon: 'folder' })
     setError('')
     setShowModal(true)
   }
@@ -99,19 +102,26 @@ export default function Categories() {
   const expenseCategories = filteredCategories.filter(c => c.type === 'expense')
   const incomeCategories = filteredCategories.filter(c => c.type === 'income')
 
+  // Helper to render category icon
+  const renderCategoryIcon = (iconId: string, className: string = '') => {
+    const IconComponent = getIconById(iconId)
+    return <IconComponent className={className} strokeWidth={1.75} />
+  }
+
   return (
     <div className="p-4 pb-24 lg:p-8 lg:pb-8">
       {/* Header */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className={`text-2xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Categories</h1>
-          <p className={isDark ? 'text-slate-400' : 'text-slate-500'}>Organize your transactions</p>
+          <h1 className={`text-2xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Categories</h1>
+          <p className={`mt-1 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Organize your transactions</p>
         </div>
         <button
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-3 font-medium text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl active:scale-[0.98]"
+          className="btn-premium inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-3 font-medium text-white shadow-lg shadow-primary-500/25"
         >
-          <span>+</span> Add Category
+          <Plus className="h-5 w-5" strokeWidth={2} />
+          Add Category
         </button>
       </div>
 
@@ -121,12 +131,12 @@ export default function Categories() {
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all ${
+            className={`whitespace-nowrap rounded-xl px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
               filter === f
-                ? 'bg-primary-500 text-white'
+                ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                 : isDark
-                ? 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                ? 'bg-[#1a1a1e] text-[#52525e] hover:bg-[#242428] hover:text-white'
+                : 'bg-white text-slate-500 hover:bg-[#f5f5dc] hover:text-slate-900 border border-[#ede9d5]'
             }`}
           >
             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -136,17 +146,17 @@ export default function Categories() {
 
       {loading ? (
         <div className="flex h-48 items-center justify-center">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
         </div>
       ) : (
         <div className="space-y-8">
           {/* Expense Categories */}
           {(filter === 'all' || filter === 'expense') && expenseCategories.length > 0 && (
             <div>
-              <h2 className={`mb-4 flex items-center gap-2 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-sm ${isDark ? 'bg-red-500/20' : 'bg-red-100'}`}>
-                  💸
-                </span>
+              <h2 className={`mb-4 flex items-center gap-2.5 text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${isDark ? 'bg-red-500/15' : 'bg-red-100'}`}>
+                  <ArrowDownCircle className={`h-4 w-4 ${isDark ? 'text-red-400' : 'text-red-600'}`} strokeWidth={2} />
+                </div>
                 Expense Categories
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -155,39 +165,35 @@ export default function Categories() {
                     key={category.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className={`flex items-center justify-between rounded-xl border p-4 ${
-                      isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                    className={`card-hover flex items-center justify-between rounded-xl border p-4 ${
+                      isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
-                        isDark ? 'bg-red-500/20' : 'bg-red-50'
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                        isDark ? 'bg-red-500/15 text-red-400' : 'bg-red-50 text-red-600'
                       }`}>
-                        {category.icon}
-                      </span>
+                        {renderCategoryIcon(category.icon, 'h-5 w-5')}
+                      </div>
                       <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{category.name}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(category)}
-                        className={`rounded-lg p-2 transition-colors ${
-                          isDark ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                        className={`rounded-lg p-2 transition-all duration-200 ${
+                          isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                         }`}
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+                        <Pencil className="h-4 w-4" strokeWidth={1.75} />
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className={`rounded-lg p-2 transition-colors ${
-                          isDark ? 'text-slate-400 hover:bg-red-500/20 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                        className={`rounded-lg p-2 transition-all duration-200 ${
+                          isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                         }`}
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                       </button>
                     </div>
                   </motion.div>
@@ -199,10 +205,10 @@ export default function Categories() {
           {/* Income Categories */}
           {(filter === 'all' || filter === 'income') && incomeCategories.length > 0 && (
             <div>
-              <h2 className={`mb-4 flex items-center gap-2 text-base font-semibold sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                <span className={`flex h-6 w-6 items-center justify-center rounded-full text-sm ${isDark ? 'bg-green-500/20' : 'bg-green-100'}`}>
-                  💰
-                </span>
+              <h2 className={`mb-4 flex items-center gap-2.5 text-sm font-semibold uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
+                <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${isDark ? 'bg-emerald-500/15' : 'bg-emerald-100'}`}>
+                  <ArrowUpCircle className={`h-4 w-4 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`} strokeWidth={2} />
+                </div>
                 Income Categories
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -211,39 +217,35 @@ export default function Categories() {
                     key={category.id}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.03 }}
-                    className={`flex items-center justify-between rounded-xl border p-4 ${
-                      isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'
+                    transition={{ delay: index * 0.03, duration: 0.3 }}
+                    className={`card-hover flex items-center justify-between rounded-xl border p-4 ${
+                      isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`flex h-10 w-10 items-center justify-center rounded-xl text-xl ${
-                        isDark ? 'bg-green-500/20' : 'bg-green-50'
+                      <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
+                        isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
                       }`}>
-                        {category.icon}
-                      </span>
+                        {renderCategoryIcon(category.icon, 'h-5 w-5')}
+                      </div>
                       <span className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{category.name}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(category)}
-                        className={`rounded-lg p-2 transition-colors ${
-                          isDark ? 'text-slate-400 hover:bg-slate-700 hover:text-slate-200' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-600'
+                        className={`rounded-lg p-2 transition-all duration-200 ${
+                          isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                         }`}
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                        </svg>
+                        <Pencil className="h-4 w-4" strokeWidth={1.75} />
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className={`rounded-lg p-2 transition-colors ${
-                          isDark ? 'text-slate-400 hover:bg-red-500/20 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
+                        className={`rounded-lg p-2 transition-all duration-200 ${
+                          isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                         }`}
                       >
-                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                        <Trash2 className="h-4 w-4" strokeWidth={1.75} />
                       </button>
                     </div>
                   </motion.div>
@@ -253,10 +255,11 @@ export default function Categories() {
           )}
 
           {filteredCategories.length === 0 && (
-            <div className={`rounded-2xl border py-16 text-center ${
-              isDark ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-slate-200 bg-white text-slate-500'
+            <div className={`flex flex-col items-center justify-center gap-3 rounded-2xl border py-16 ${
+              isDark ? 'border-[#1a1a1e] bg-[#121214] text-[#3d3d45]' : 'border-[#ede9d5] bg-white text-slate-400'
             }`}>
-              No categories found. Add one to get started!
+              <Folder className="h-10 w-10" strokeWidth={1.5} />
+              <span className="text-sm">No categories found. Add one to get started!</span>
             </div>
           )}
         </div>
@@ -279,24 +282,24 @@ export default function Categories() {
               exit={{ opacity: 0, y: '100%' }}
               transition={{ type: 'spring', damping: 30, stiffness: 300 }}
               className={`fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-y-auto rounded-t-3xl p-6 safe-area-bottom sm:inset-auto sm:left-1/2 sm:top-1/2 sm:max-h-[85vh] sm:w-full sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-2xl ${
-                isDark ? 'bg-slate-800' : 'bg-white'
+                isDark ? 'bg-[#121214]' : 'bg-white'
               }`}
             >
-              <div className="absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full bg-slate-300 sm:hidden" />
+              <div className={`absolute left-1/2 top-3 h-1 w-10 -translate-x-1/2 rounded-full sm:hidden ${isDark ? 'bg-[#242428]' : 'bg-slate-200'}`} />
               
-              <h2 className={`mb-6 pt-2 text-xl font-semibold sm:pt-0 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+              <h2 className={`mb-6 pt-2 text-xl font-semibold tracking-tight sm:pt-0 ${isDark ? 'text-white' : 'text-slate-900'}`}>
                 {editingCategory ? 'Edit Category' : 'Add Category'}
               </h2>
               <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Type Toggle */}
-                <div className={`flex gap-2 rounded-xl p-1 ${isDark ? 'bg-slate-700' : 'bg-slate-100'}`}>
+                <div className={`flex gap-1 rounded-xl p-1 ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'expense' })}
-                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all duration-200 ${
                       formData.type === 'expense'
-                        ? isDark ? 'bg-slate-600 text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm'
-                        : isDark ? 'text-slate-400' : 'text-slate-600'
+                        ? isDark ? 'bg-[#242428] text-red-400 shadow-sm' : 'bg-white text-red-600 shadow-sm'
+                        : isDark ? 'text-[#52525e]' : 'text-slate-500'
                     }`}
                   >
                     Expense
@@ -304,10 +307,10 @@ export default function Categories() {
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, type: 'income' })}
-                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all ${
+                    className={`flex-1 rounded-lg py-3 text-sm font-medium transition-all duration-200 ${
                       formData.type === 'income'
-                        ? isDark ? 'bg-slate-600 text-green-400 shadow-sm' : 'bg-white text-green-600 shadow-sm'
-                        : isDark ? 'text-slate-400' : 'text-slate-600'
+                        ? isDark ? 'bg-[#242428] text-emerald-400 shadow-sm' : 'bg-white text-emerald-600 shadow-sm'
+                        : isDark ? 'text-[#52525e]' : 'text-slate-500'
                     }`}
                   >
                     Income
@@ -316,13 +319,13 @@ export default function Categories() {
 
                 {/* Name */}
                 <div>
-                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Name</label>
+                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Name</label>
                   <input
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className={`w-full rounded-xl border px-4 py-3.5 transition-colors ${
-                      isDark ? 'border-slate-600 bg-slate-700 text-white' : 'border-slate-200 bg-white text-slate-900'
+                    className={`w-full rounded-xl border px-4 py-3.5 transition-all duration-200 ${
+                      isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'
                     }`}
                     placeholder="Category name"
                     required
@@ -331,43 +334,47 @@ export default function Categories() {
 
                 {/* Icon Picker */}
                 <div>
-                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>Icon</label>
+                  <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Icon</label>
                   <div className={`grid grid-cols-8 gap-2 rounded-xl border p-3 ${
-                    isDark ? 'border-slate-600 bg-slate-700' : 'border-slate-200 bg-slate-50'
+                    isDark ? 'border-[#242428] bg-[#1a1a1e]' : 'border-[#ede9d5] bg-[#faf9f6]'
                   }`}>
-                    {EMOJI_OPTIONS.map((emoji) => (
-                      <button
-                        key={emoji}
-                        type="button"
-                        onClick={() => setFormData({ ...formData, icon: emoji })}
-                        className={`flex h-10 w-10 items-center justify-center rounded-lg text-xl transition-all active:scale-90 ${
-                          formData.icon === emoji
-                            ? 'bg-primary-500 shadow-lg'
-                            : isDark ? 'bg-slate-600 hover:bg-slate-500' : 'bg-white hover:bg-slate-100'
-                        }`}
-                      >
-                        {emoji}
-                      </button>
-                    ))}
+                    {CATEGORY_ICONS.map((iconOption) => {
+                      const IconComponent = iconOption.icon
+                      return (
+                        <button
+                          key={iconOption.id}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, icon: iconOption.id })}
+                          className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
+                            formData.icon === iconOption.id
+                              ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                              : isDark ? 'bg-[#242428] text-[#52525e] hover:bg-[#2e2e34] hover:text-white' : 'bg-white text-slate-500 hover:bg-[#ede9d5] hover:text-slate-700'
+                          }`}
+                          title={iconOption.name}
+                        >
+                          <IconComponent className="h-5 w-5" strokeWidth={1.75} />
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
 
                 {/* Buttons */}
-                <div className="flex gap-3">
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setShowModal(false)}
-                    className={`flex-1 rounded-xl border py-3.5 font-medium transition-all active:scale-[0.98] ${
-                      isDark ? 'border-slate-600 text-slate-300 hover:bg-slate-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'
+                    className={`flex-1 rounded-xl border py-3.5 font-medium transition-all duration-200 active:scale-[0.98] ${
+                      isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-500 hover:bg-[#f5f5dc]'
                     }`}
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    className="flex-1 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 py-3.5 font-medium text-white shadow-lg shadow-primary-500/30 transition-all hover:shadow-xl active:scale-[0.98]"
+                    className="btn-premium flex-1 rounded-xl bg-gradient-to-r from-primary-500 to-primary-600 py-3.5 font-medium text-white shadow-lg shadow-primary-500/25"
                   >
                     {editingCategory ? 'Update' : 'Add'}
                   </button>
