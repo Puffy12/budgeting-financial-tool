@@ -15,6 +15,7 @@ export default function Transactions() {
   const [showModal, setShowModal] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [filter, setFilter] = useState<{ type?: 'income' | 'expense' }>({})
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   // Form state
   const [formData, setFormData] = useState({
@@ -69,6 +70,7 @@ export default function Transactions() {
       date: transaction.date,
       notes: transaction.notes,
     })
+    setExpandedId(null)
     setShowModal(true)
   }
 
@@ -106,6 +108,7 @@ export default function Transactions() {
 
     try {
       await transactionsApi.delete(currentUser.id, transactionId)
+      setExpandedId(null)
       loadData()
     } catch (err) {
       console.error('Failed to delete transaction:', err)
@@ -117,6 +120,10 @@ export default function Transactions() {
       style: 'currency',
       currency: 'USD',
     }).format(amount)
+  }
+
+  const toggleExpand = (id: string) => {
+    setExpandedId(expandedId === id ? null : id)
   }
 
   const filteredCategories = categories.filter(c => c.type === formData.type)
@@ -203,45 +210,132 @@ export default function Transactions() {
       ) : transactions.length > 0 ? (
         <div className={`rounded-2xl border shadow-sm ${isDark ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-white'}`}>
           {/* Mobile List View */}
-          <div className="divide-y lg:hidden ${isDark ? 'divide-slate-700' : 'divide-slate-100'}">
+          <div className={`divide-y lg:hidden ${isDark ? 'divide-slate-700' : 'divide-slate-100'}`}>
             {transactions.map((transaction) => (
-              <div
-                key={transaction.id}
-                className={`flex items-center justify-between p-4 ${isDark ? 'divide-slate-700' : ''}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-xl ${
-                    isDark ? 'bg-slate-700' : 'bg-slate-50'
-                  }`}>
-                    {transaction.category?.icon || '📋'}
+              <div key={transaction.id}>
+                {/* Main Row - Tappable */}
+                <button
+                  onClick={() => toggleExpand(transaction.id)}
+                  className={`flex w-full items-center justify-between p-4 text-left transition-colors ${
+                    expandedId === transaction.id
+                      ? isDark ? 'bg-slate-700/50' : 'bg-slate-50'
+                      : ''
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-xl ${
+                      isDark ? 'bg-slate-700' : 'bg-slate-100'
+                    }`}>
+                      {transaction.category?.icon || '📋'}
+                    </div>
+                    <div className="min-w-0">
+                      <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        {transaction.category?.name || 'Unknown'}
+                      </p>
+                      <p className={`text-xs ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                        Tap for details
+                      </p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className={`font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                      {transaction.category?.name || 'Unknown'}
+                  <div className="flex items-center gap-2">
+                    <p className={`font-semibold ${
+                      transaction.type === 'income'
+                        ? isDark ? 'text-green-400' : 'text-green-600'
+                        : isDark ? 'text-red-400' : 'text-red-600'
+                    }`}>
+                      {transaction.type === 'income' ? '+' : '-'}
+                      {formatCurrency(transaction.amount)}
                     </p>
-                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                      {new Date(transaction.date).toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <p className={`font-semibold ${
-                    transaction.type === 'income'
-                      ? isDark ? 'text-green-400' : 'text-green-600'
-                      : isDark ? 'text-red-400' : 'text-red-600'
-                  }`}>
-                    {transaction.type === 'income' ? '+' : '-'}
-                    {formatCurrency(transaction.amount)}
-                  </p>
-                  <button
-                    onClick={() => openEditModal(transaction)}
-                    className={`rounded-lg p-2 ${isDark ? 'text-slate-400 hover:bg-slate-700' : 'text-slate-400 hover:bg-slate-100'}`}
-                  >
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    <svg 
+                      className={`h-4 w-4 transition-transform ${
+                        expandedId === transaction.id ? 'rotate-180' : ''
+                      } ${isDark ? 'text-slate-500' : 'text-slate-400'}`}
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
-                  </button>
-                </div>
+                  </div>
+                </button>
+
+                {/* Expanded Details */}
+                <AnimatePresence>
+                  {expandedId === transaction.id && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className={`border-t px-4 pb-4 pt-3 ${isDark ? 'border-slate-700 bg-slate-750' : 'border-slate-100 bg-slate-50'}`}>
+                        {/* Details Grid */}
+                        <div className="mb-4 space-y-2">
+                          <div className="flex justify-between">
+                            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Date</span>
+                            <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                              {new Date(transaction.date).toLocaleDateString('en-US', {
+                                weekday: 'short',
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className={`text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Type</span>
+                            <span className={`text-sm font-medium capitalize ${
+                              transaction.type === 'income' 
+                                ? isDark ? 'text-green-400' : 'text-green-600'
+                                : isDark ? 'text-red-400' : 'text-red-600'
+                            }`}>
+                              {transaction.type}
+                            </span>
+                          </div>
+                          {transaction.notes && (
+                            <div className="flex justify-between gap-4">
+                              <span className={`shrink-0 text-sm ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Notes</span>
+                              <span className={`text-right text-sm ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
+                                {transaction.notes}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEditModal(transaction)}
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-medium transition-all active:scale-[0.98] ${
+                              isDark 
+                                ? 'bg-slate-700 text-white hover:bg-slate-600' 
+                                : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                            }`}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(transaction.id)}
+                            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 font-medium transition-all active:scale-[0.98] ${
+                              isDark 
+                                ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+                                : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
+                            }`}
+                          >
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             ))}
           </div>
