@@ -28,6 +28,7 @@ import {
   ArrowRight,
   Folder,
 } from 'lucide-react'
+import { getIconById } from '../utils/categoryIcons'
 
 ChartJS.register(
   CategoryScale,
@@ -223,6 +224,13 @@ export default function Dashboard() {
     },
   }
 
+  // Helper to render category icon
+  const renderCategoryIcon = (iconId: string | undefined, className: string = '') => {
+    if (!iconId) return <Folder className={className} strokeWidth={1.75} />
+    const IconComponent = getIconById(iconId)
+    return <IconComponent className={className} strokeWidth={1.75} />
+  }
+
   if (loading) {
     return (
       <div className="flex h-[50vh] items-center justify-center">
@@ -378,10 +386,10 @@ export default function Dashboard() {
                 }`}
               >
                 <div className="flex items-center gap-4">
-                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl text-lg ${
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${
                     isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'
                   }`}>
-                    {transaction.category?.icon || <Folder className="h-5 w-5 text-slate-400" strokeWidth={1.75} />}
+                    {renderCategoryIcon(transaction.category?.icon, `h-5 w-5 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`)}
                   </div>
                   <div className="min-w-0">
                     <p className={`font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>

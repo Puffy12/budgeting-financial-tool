@@ -73,7 +73,7 @@ router.post('/', (req, res) => {
       userId: userId,
       name: name.trim(),
       type,
-      icon: icon || (type === 'expense' ? '📋' : '💰'),
+      icon: icon || (type === 'expense' ? 'folder' : 'wallet'),
       createdAt: now,
       updatedAt: now
     };

@@ -17,28 +17,29 @@ const DATA_DIR = path.join(__dirname, '..', 'data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
 // Default categories to create for new users
+// Icon IDs correspond to Lucide icons defined in frontend/src/utils/categoryIcons.ts
 const DEFAULT_CATEGORIES = [
   // Expense categories
-  { name: 'Groceries', type: 'expense', icon: '🛒' },
-  { name: 'Rent', type: 'expense', icon: '🏠' },
-  { name: 'Utilities', type: 'expense', icon: '💡' },
-  { name: 'Transportation', type: 'expense', icon: '🚗' },
-  { name: 'Entertainment', type: 'expense', icon: '🎬' },
-  { name: 'Dining Out', type: 'expense', icon: '🍽️' },
-  { name: 'Healthcare', type: 'expense', icon: '🏥' },
-  { name: 'Shopping', type: 'expense', icon: '🛍️' },
-  { name: 'Subscriptions', type: 'expense', icon: '📱' },
-  { name: 'Insurance', type: 'expense', icon: '🛡️' },
-  { name: 'Education', type: 'expense', icon: '📚' },
-  { name: 'Personal Care', type: 'expense', icon: '💅' },
-  { name: 'Other Expense', type: 'expense', icon: '📋' },
+  { name: 'Groceries', type: 'expense', icon: 'shopping-cart' },
+  { name: 'Rent', type: 'expense', icon: 'home' },
+  { name: 'Utilities', type: 'expense', icon: 'lightbulb' },
+  { name: 'Transportation', type: 'expense', icon: 'car' },
+  { name: 'Entertainment', type: 'expense', icon: 'film' },
+  { name: 'Dining Out', type: 'expense', icon: 'utensils' },
+  { name: 'Healthcare', type: 'expense', icon: 'stethoscope' },
+  { name: 'Shopping', type: 'expense', icon: 'shopping-bag' },
+  { name: 'Subscriptions', type: 'expense', icon: 'smartphone' },
+  { name: 'Insurance', type: 'expense', icon: 'shield' },
+  { name: 'Education', type: 'expense', icon: 'book' },
+  { name: 'Personal Care', type: 'expense', icon: 'sparkles' },
+  { name: 'Other Expense', type: 'expense', icon: 'folder' },
   // Income categories
-  { name: 'Salary', type: 'income', icon: '💰' },
-  { name: 'Freelance', type: 'income', icon: '💻' },
-  { name: 'Investments', type: 'income', icon: '📈' },
-  { name: 'Gifts', type: 'income', icon: '🎁' },
-  { name: 'Refunds', type: 'income', icon: '💵' },
-  { name: 'Other Income', type: 'income', icon: '✨' }
+  { name: 'Salary', type: 'income', icon: 'wallet' },
+  { name: 'Freelance', type: 'income', icon: 'laptop' },
+  { name: 'Investments', type: 'income', icon: 'trending-up' },
+  { name: 'Gifts', type: 'income', icon: 'gift' },
+  { name: 'Refunds', type: 'income', icon: 'banknote' },
+  { name: 'Other Income', type: 'income', icon: 'star' }
 ];
 
 /**
