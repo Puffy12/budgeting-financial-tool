@@ -396,7 +396,7 @@ export default function Dashboard() {
                       {transaction.category?.name || 'Unknown'}
                     </p>
                     <p className={`text-xs truncate ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
-                      {new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {new Date(transaction.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       {transaction.notes && ` · ${transaction.notes}`}
                     </p>
                   </div>

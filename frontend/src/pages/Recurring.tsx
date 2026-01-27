@@ -287,7 +287,7 @@ export default function Recurring() {
                       {rec.category?.name} · {FREQUENCY_LABELS[rec.frequency]}
                     </p>
                     <p className={`text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
-                      Next: {new Date(rec.nextDueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      Next: {new Date(rec.nextDueDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                     </p>
                   </div>
                 </div>

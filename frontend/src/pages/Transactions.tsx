@@ -249,7 +249,7 @@ export default function Transactions() {
                         {transaction.category?.name || 'Unknown'}
                       </p>
                       <p className={`text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
-                        {new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        {new Date(transaction.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </p>
                     </div>
                   </div>
@@ -287,7 +287,7 @@ export default function Transactions() {
                           <div className="flex justify-between">
                             <span className={`text-sm ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Date</span>
                             <span className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                              {new Date(transaction.date).toLocaleDateString('en-US', {
+                              {new Date(transaction.date + 'T12:00:00').toLocaleDateString('en-US', {
                                 weekday: 'short',
                                 year: 'numeric',
                                 month: 'short',
@@ -376,7 +376,7 @@ export default function Transactions() {
                       </div>
                     </td>
                     <td className={`px-6 py-4 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
-                      {new Date(transaction.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      {new Date(transaction.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className={`max-w-xs truncate px-6 py-4 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
                       {transaction.notes || '-'}
