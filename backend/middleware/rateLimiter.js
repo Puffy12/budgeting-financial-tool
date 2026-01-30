@@ -19,10 +19,7 @@ const apiLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
   skipSuccessfulRequests: false,
-  keyGenerator: (req) => {
-    // Use X-Forwarded-For header if behind a proxy, otherwise use IP
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-  }
+  // Use default keyGenerator (handles IPv6 properly)
 });
 
 /**
@@ -39,9 +36,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skipSuccessfulRequests: true, // Don't count successful auth attempts
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-  }
+  // Use default keyGenerator (handles IPv6 properly)
 });
 
 /**
@@ -57,9 +52,7 @@ const exportLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-  }
+  // Use default keyGenerator (handles IPv6 properly)
 });
 
 /**
@@ -75,9 +68,7 @@ const writeLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip;
-  }
+  // Use default keyGenerator (handles IPv6 properly)
 });
 
 module.exports = {
