@@ -13,6 +13,7 @@ require('dotenv').config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 
 // Import routes
 const usersRouter = require('./routes/users');
@@ -24,6 +25,12 @@ const exportRouter = require('./routes/export');
 // Import utilities
 const db = require('./utils/db');
 const { processRecurringTransactions } = require('./utils/recurringProcessor');
+
+// Import middleware
+const { apiLimiter, authLimiter, writeLimiter } = require('./middleware/rateLimiter');
+
+// Import JWT auth
+const { generateTokens, refreshAccessToken, revokeRefreshToken, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } = require('./auth/jwt');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -69,11 +76,28 @@ function isValidAuthToken(token) {
   return age >= 0 && age < AUTH_COOKIE_MAX_AGE;
 }
 
+// Security headers (helmet)
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for SPA compatibility
+  crossOriginEmbedderPolicy: false
+}));
+
 // Middleware
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Apply rate limiting to API routes
+app.use('/api', apiLimiter);
+
+// Apply stricter rate limiting to write operations
+app.use('/api', (req, res, next) => {
+  if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(req.method)) {
+    return writeLimiter(req, res, next);
+  }
+  next();
+});
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -92,6 +116,10 @@ processRecurringTransactions();
 setInterval(processRecurringTransactions, 60 * 60 * 1000);
 
 // ============ Password Protection ============
+
+// Apply auth limiter to password endpoints
+app.use('/check-password', authLimiter);
+app.use('/api/auth', authLimiter);
 
 // Password check endpoint - must be before auth middleware
 app.post('/check-password', (req, res) => {
@@ -116,6 +144,123 @@ app.post('/check-password', (req, res) => {
   
   // Wrong password
   return res.redirect('/password.html?error=1');
+});
+
+// ============ JWT Authentication Endpoints ============
+
+// Login endpoint - returns JWT tokens
+app.post('/api/auth/login', (req, res) => {
+  const { password } = req.body;
+  
+  if (!DASHBOARD_PASSWORD) {
+    // No password set, generate tokens anyway
+    const tokens = generateTokens('default-user');
+    res.cookie('access_token', tokens.accessToken, {
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProduction
+    });
+    res.cookie('refresh_token', tokens.refreshToken, {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProduction
+    });
+    return res.json({
+      message: 'Login successful',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: ACCESS_TOKEN_EXPIRY
+    });
+  }
+  
+  if (password === DASHBOARD_PASSWORD) {
+    const tokens = generateTokens('authenticated-user');
+    
+    // Set HTTP-only cookies
+    res.cookie('access_token', tokens.accessToken, {
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProduction
+    });
+    res.cookie('refresh_token', tokens.refreshToken, {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: isProduction
+    });
+    
+    return res.json({
+      message: 'Login successful',
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+      expiresIn: ACCESS_TOKEN_EXPIRY
+    });
+  }
+  
+  return res.status(401).json({
+    error: 'Unauthorized',
+    message: 'Invalid password'
+  });
+});
+
+// Refresh token endpoint
+app.post('/api/auth/refresh', (req, res) => {
+  const refreshToken = req.body.refreshToken || req.cookies?.refresh_token;
+  
+  if (!refreshToken) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Refresh token is required'
+    });
+  }
+  
+  const tokens = refreshAccessToken(refreshToken);
+  
+  if (!tokens) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid or expired refresh token'
+    });
+  }
+  
+  // Set new cookies
+  res.cookie('access_token', tokens.accessToken, {
+    maxAge: 15 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: isProduction
+  });
+  res.cookie('refresh_token', tokens.refreshToken, {
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    httpOnly: true,
+    sameSite: 'strict',
+    secure: isProduction
+  });
+  
+  return res.json({
+    message: 'Token refreshed successfully',
+    accessToken: tokens.accessToken,
+    refreshToken: tokens.refreshToken,
+    expiresIn: ACCESS_TOKEN_EXPIRY
+  });
+});
+
+// Logout endpoint - revokes refresh token
+app.post('/api/auth/logout', (req, res) => {
+  const refreshToken = req.body.refreshToken || req.cookies?.refresh_token;
+  
+  if (refreshToken) {
+    revokeRefreshToken(refreshToken);
+  }
+  
+  res.clearCookie('access_token');
+  res.clearCookie('refresh_token');
+  res.clearCookie(AUTH_COOKIE_NAME);
+  
+  return res.json({ message: 'Logged out successfully' });
 });
 
 // Serve password page

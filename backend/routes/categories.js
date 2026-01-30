@@ -6,6 +6,8 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
+const { validateBody } = require('../middleware/validate');
+const { createCategorySchema, updateCategorySchema } = require('../validation/schemas');
 
 /**
  * Middleware to validate user exists
@@ -53,25 +55,17 @@ router.get('/:categoryId', (req, res) => {
 /**
  * POST /api/users/:userId/categories - Create a new category
  */
-router.post('/', (req, res) => {
+router.post('/', validateBody(createCategorySchema), (req, res) => {
   try {
     const { name, type, icon } = req.body;
     const userId = req.params.userId;
-    
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    
-    if (!type || !['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be "income" or "expense"' });
-    }
     
     const now = new Date().toISOString();
     
     const category = {
       id: uuidv4(),
       userId: userId,
-      name: name.trim(),
+      name,
       type,
       icon: icon || (type === 'expense' ? 'folder' : 'wallet'),
       createdAt: now,
@@ -90,7 +84,7 @@ router.post('/', (req, res) => {
 /**
  * PUT /api/users/:userId/categories/:categoryId - Update a category
  */
-router.put('/:categoryId', (req, res) => {
+router.put('/:categoryId', validateBody(updateCategorySchema), (req, res) => {
   try {
     const { name, type, icon } = req.body;
     const userId = req.params.userId;
@@ -103,11 +97,11 @@ router.put('/:categoryId', (req, res) => {
     
     const updates = {};
     
-    if (name && name.trim()) {
-      updates.name = name.trim();
+    if (name) {
+      updates.name = name;
     }
     
-    if (type && ['income', 'expense'].includes(type)) {
+    if (type) {
       updates.type = type;
     }
     

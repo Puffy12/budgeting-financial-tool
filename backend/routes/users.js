@@ -6,6 +6,8 @@ const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
+const { validateBody, validateQuery } = require('../middleware/validate');
+const { createUserSchema, updateUserSchema, monthlyQuerySchema } = require('../validation/schemas');
 
 /**
  * GET /api/users - List all users
@@ -39,20 +41,16 @@ router.get('/:userId', (req, res) => {
 /**
  * POST /api/users - Create a new user
  */
-router.post('/', (req, res) => {
+router.post('/', validateBody(createUserSchema), (req, res) => {
   try {
     const { name } = req.body;
-    
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
     
     const userId = uuidv4();
     const now = new Date().toISOString();
     
     const user = {
       id: userId,
-      name: name.trim(),
+      name,
       createdAt: now,
       updatedAt: now
     };
@@ -82,15 +80,11 @@ router.post('/', (req, res) => {
 /**
  * PUT /api/users/:userId - Update a user
  */
-router.put('/:userId', (req, res) => {
+router.put('/:userId', validateBody(updateUserSchema), (req, res) => {
   try {
     const { name } = req.body;
     
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    
-    const user = db.updateUser(req.params.userId, { name: name.trim() });
+    const user = db.updateUser(req.params.userId, { name });
     
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
