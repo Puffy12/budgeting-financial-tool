@@ -16,7 +16,8 @@ function App() {
       <UserProvider>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/app" element={<Layout />}>
+          {/* App routes with userId in URL for persistence */}
+          <Route path="/app/:userId" element={<Layout />}>
             <Route index element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="categories" element={<Categories />} />
@@ -24,6 +25,8 @@ function App() {
             <Route path="breakdown" element={<Breakdown />} />
             <Route path="settings" element={<Settings />} />
           </Route>
+          {/* Redirect old /app route to home for user selection */}
+          <Route path="/app" element={<Navigate to="/" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </UserProvider>
