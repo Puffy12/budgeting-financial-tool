@@ -36,12 +36,12 @@ export const queryKeys = {
   category: (userId: string, categoryId: string) => ['categories', userId, categoryId] as const,
   
   // Transactions
-  transactions: (userId: string, filters?: Record<string, unknown>) => 
+  transactions: <T extends object>(userId: string, filters?: T) => 
     filters ? ['transactions', userId, filters] as const : ['transactions', userId] as const,
   transaction: (userId: string, transactionId: string) => ['transactions', userId, transactionId] as const,
   
   // Recurring
-  recurring: (userId: string, filters?: Record<string, unknown>) => 
+  recurring: <T extends object>(userId: string, filters?: T) => 
     filters ? ['recurring', userId, filters] as const : ['recurring', userId] as const,
   recurringItem: (userId: string, recurringId: string) => ['recurring', userId, recurringId] as const,
 }

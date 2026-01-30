@@ -4,7 +4,7 @@
  */
 
 import { AlertTriangle, Trash2 } from 'lucide-react'
-import { Modal, ModalHeader, ModalTitle, ModalDescription, ModalBody, ModalFooter } from './Modal'
+import { Modal, ModalTitle, ModalDescription, ModalBody, ModalFooter } from './Modal'
 import { Button } from './Button'
 
 interface ConfirmDialogProps {

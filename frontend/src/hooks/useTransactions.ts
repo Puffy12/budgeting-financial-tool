@@ -59,7 +59,7 @@ export function useCreateTransaction() {
   return useMutation({
     mutationFn: ({ userId, data }: { userId: string; data: CreateTransactionData }) =>
       transactionsApi.create(userId, data),
-    onSuccess: (newTransaction, variables) => {
+    onSuccess: (_newTransaction, variables) => {
       // Invalidate related queries
       queryClient.invalidateQueries({ queryKey: ['transactions', variables.userId] })
       queryClient.invalidateQueries({ queryKey: queryKeys.userSummary(variables.userId) })

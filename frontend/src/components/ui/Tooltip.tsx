@@ -23,7 +23,7 @@ export function Tooltip({
   className,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false)
-  let timeout: NodeJS.Timeout
+  let timeout: ReturnType<typeof setTimeout>
 
   const handleMouseEnter = () => {
     timeout = setTimeout(() => setIsVisible(true), delay)
