@@ -193,25 +193,47 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
                   </button>
                 </div>
 
-                {/* Amount Display */}
-                <div className="px-5 py-6 text-center sm:px-6">
-                  <div className={`text-5xl font-bold tabular-nums tracking-tight sm:text-6xl ${
+                {/* Amount Display - Mobile */}
+                <div className="px-5 py-6 text-center sm:hidden">
+                  <div className={`text-5xl font-bold tabular-nums tracking-tight ${
                     type === 'expense' 
                       ? isDark ? 'text-red-400' : 'text-red-500'
                       : isDark ? 'text-emerald-400' : 'text-emerald-500'
                   }`}>
                     ${amount || '0'}
                   </div>
-                  {/* Hidden input for desktop */}
-                  <input
-                    ref={amountInputRef}
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    className="sr-only"
-                  />
+                </div>
+
+                {/* Amount Input - Desktop */}
+                <div className="hidden px-5 py-6 sm:block sm:px-6">
+                  <label className={`mb-2 block text-xs font-medium ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
+                    Amount
+                  </label>
+                  <div className="relative">
+                    <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold ${
+                      type === 'expense'
+                        ? isDark ? 'text-red-400' : 'text-red-500'
+                        : isDark ? 'text-emerald-400' : 'text-emerald-500'
+                    }`}>$</span>
+                    <input
+                      ref={amountInputRef}
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="0.00"
+                      className={`w-full rounded-xl border py-4 pl-10 pr-4 text-2xl font-bold tabular-nums transition-all duration-200 ${
+                        isDark
+                          ? 'border-[#242428] bg-[#1a1a1e] focus:border-primary-500'
+                          : 'border-[#ede9d5] bg-[#faf9f6] focus:border-primary-500'
+                      } ${
+                        type === 'expense'
+                          ? isDark ? 'text-red-400' : 'text-red-500'
+                          : isDark ? 'text-emerald-400' : 'text-emerald-500'
+                      }`}
+                    />
+                  </div>
                 </div>
 
                 {/* Number Pad - Mobile Only */}
