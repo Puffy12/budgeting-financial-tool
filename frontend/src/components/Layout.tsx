@@ -1,4 +1,4 @@
-import { Outlet, NavLink, useNavigate } from 'react-router-dom'
+import { Outlet, NavLink, useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useUser } from '../context/UserContext'
 import { useTheme } from '../context/ThemeContext'
@@ -21,13 +21,14 @@ import {
   Wallet,
 } from 'lucide-react'
 
+// Navigation items use relative paths - they'll be relative to /app/:userId
 const navItems = [
-  { path: '/app', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { path: '/app/transactions', label: 'Transactions', icon: Receipt },
-  { path: '/app/recurring', label: 'Recurring', icon: RefreshCw },
-  { path: '/app/breakdown', label: 'Breakdown', icon: TrendingUp },
-  { path: '/app/categories', label: 'Categories', icon: Tags },
-  { path: '/app/settings', label: 'Settings', icon: Settings },
+  { path: '', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { path: 'transactions', label: 'Transactions', icon: Receipt },
+  { path: 'recurring', label: 'Recurring', icon: RefreshCw },
+  { path: 'breakdown', label: 'Breakdown', icon: TrendingUp },
+  { path: 'categories', label: 'Categories', icon: Tags },
+  { path: 'settings', label: 'Settings', icon: Settings },
 ]
 
 function ThemeToggle({ className = '' }: { className?: string }) {
@@ -59,25 +60,46 @@ function ThemeToggle({ className = '' }: { className?: string }) {
 }
 
 export default function Layout() {
-  const { currentUser, setCurrentUser } = useUser()
+  const { currentUser, setCurrentUser, users, loading } = useUser()
   const { resolvedTheme } = useTheme()
   const navigate = useNavigate()
+  const { userId } = useParams<{ userId: string }>()
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
+  // Load user from URL param on mount or when userId changes
   useEffect(() => {
-    if (!currentUser) {
+    if (loading) return // Wait for users to load
+    
+    if (!userId) {
       navigate('/')
+      return
     }
-  }, [currentUser, navigate])
+
+    // If we have a userId in URL but no currentUser, or different user, load from users list
+    if (!currentUser || currentUser.id !== userId) {
+      const user = users.find(u => u.id === userId)
+      if (user) {
+        setCurrentUser(user)
+      } else {
+        // User not found, redirect to home
+        navigate('/')
+      }
+    }
+  }, [userId, users, loading, currentUser, setCurrentUser, navigate])
 
   const handleSwitchUser = () => {
     setCurrentUser(null)
     navigate('/')
   }
 
-  if (!currentUser) {
-    return null
+  // Show loading while fetching users or user data
+  if (loading || !currentUser) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+      </div>
+    )
   }
 
   const isDark = resolvedTheme === 'dark'
@@ -116,10 +138,11 @@ export default function Layout() {
           <nav className="flex-1 space-y-1 px-3 py-4">
             {navItems.map((item) => {
               const Icon = item.icon
+              const fullPath = item.path ? `/app/${userId}/${item.path}` : `/app/${userId}`
               return (
                 <NavLink
                   key={item.path}
-                  to={item.path}
+                  to={fullPath}
                   end={item.end}
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
@@ -269,10 +292,11 @@ export default function Layout() {
                 <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
                   {navItems.map((item) => {
                     const Icon = item.icon
+                    const fullPath = item.path ? `/app/${userId}/${item.path}` : `/app/${userId}`
                     return (
                       <NavLink
                         key={item.path}
-                        to={item.path}
+                        to={fullPath}
                         end={item.end}
                         onClick={() => setMobileNavOpen(false)}
                         className={({ isActive }) =>

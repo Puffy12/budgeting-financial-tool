@@ -22,7 +22,7 @@ export default function Home() {
 
   const handleSelectUser = (user: typeof users[0]) => {
     setCurrentUser(user)
-    navigate('/app')
+    navigate(`/app/${user.id}`)
   }
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -35,7 +35,7 @@ export default function Home() {
       setCurrentUser(user)
       setShowCreateModal(false)
       setNewUserName('')
-      navigate('/app')
+      navigate(`/app/${user.id}`)
     } catch (err) {
       console.error('Failed to create user:', err)
     } finally {

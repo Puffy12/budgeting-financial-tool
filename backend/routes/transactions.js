@@ -6,6 +6,12 @@ const express = require('express');
 const router = express.Router({ mergeParams: true });
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
+const { validateBody, validateQuery } = require('../middleware/validate');
+const { 
+  createTransactionSchema, 
+  updateTransactionSchema, 
+  transactionQuerySchema 
+} = require('../validation/schemas');
 
 /**
  * Middleware to validate user exists
@@ -132,22 +138,10 @@ router.get('/:transactionId', (req, res) => {
 /**
  * POST /api/users/:userId/transactions - Create a new transaction
  */
-router.post('/', (req, res) => {
+router.post('/', validateBody(createTransactionSchema), (req, res) => {
   try {
     const { amount, type, categoryId, date, notes } = req.body;
     const userId = req.params.userId;
-    
-    if (amount === undefined || amount <= 0) {
-      return res.status(400).json({ error: 'Amount must be a positive number' });
-    }
-    
-    if (!type || !['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be "income" or "expense"' });
-    }
-    
-    if (!categoryId) {
-      return res.status(400).json({ error: 'Category ID is required' });
-    }
     
     // Validate category exists and belongs to user
     const category = db.getById('categories', categoryId, userId);
@@ -161,7 +155,7 @@ router.post('/', (req, res) => {
       id: uuidv4(),
       userId: userId,
       categoryId,
-      amount: parseFloat(amount),
+      amount,
       type,
       date: date || now.split('T')[0],
       notes: notes || '',
@@ -186,7 +180,7 @@ router.post('/', (req, res) => {
 /**
  * PUT /api/users/:userId/transactions/:transactionId - Update a transaction
  */
-router.put('/:transactionId', (req, res) => {
+router.put('/:transactionId', validateBody(updateTransactionSchema), (req, res) => {
   try {
     const { amount, type, categoryId, date, notes } = req.body;
     const userId = req.params.userId;
@@ -200,13 +194,10 @@ router.put('/:transactionId', (req, res) => {
     const updates = {};
     
     if (amount !== undefined) {
-      if (amount <= 0) {
-        return res.status(400).json({ error: 'Amount must be a positive number' });
-      }
-      updates.amount = parseFloat(amount);
+      updates.amount = amount;
     }
     
-    if (type && ['income', 'expense'].includes(type)) {
+    if (type) {
       updates.type = type;
     }
     

@@ -7,6 +7,8 @@ const router = express.Router({ mergeParams: true });
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
 const { processSpecificRecurring } = require('../utils/recurringProcessor');
+const { validateBody, validateQuery } = require('../middleware/validate');
+const { createRecurringSchema, updateRecurringSchema, recurringQuerySchema } = require('../validation/schemas');
 
 /**
  * Middleware to validate user exists
@@ -88,30 +90,10 @@ router.get('/:recurringId', (req, res) => {
 /**
  * POST /api/users/:userId/recurring - Create a new recurring transaction
  */
-router.post('/', (req, res) => {
+router.post('/', validateBody(createRecurringSchema), (req, res) => {
   try {
     const { name, amount, type, categoryId, frequency, startDate, notes } = req.body;
     const userId = req.params.userId;
-    
-    if (!name || !name.trim()) {
-      return res.status(400).json({ error: 'Name is required' });
-    }
-    
-    if (amount === undefined || amount <= 0) {
-      return res.status(400).json({ error: 'Amount must be a positive number' });
-    }
-    
-    if (!type || !['income', 'expense'].includes(type)) {
-      return res.status(400).json({ error: 'Type must be "income" or "expense"' });
-    }
-    
-    if (!categoryId) {
-      return res.status(400).json({ error: 'Category ID is required' });
-    }
-    
-    if (!frequency || !['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'].includes(frequency)) {
-      return res.status(400).json({ error: 'Frequency must be weekly, biweekly, monthly, quarterly, or yearly' });
-    }
     
     // Validate category exists and belongs to user
     const category = db.getById('categories', categoryId, userId);
@@ -125,9 +107,9 @@ router.post('/', (req, res) => {
     const recurring = {
       id: uuidv4(),
       userId: userId,
-      name: name.trim(),
+      name,
       categoryId,
-      amount: parseFloat(amount),
+      amount,
       type,
       frequency,
       startDate: start,
@@ -153,7 +135,7 @@ router.post('/', (req, res) => {
 /**
  * PUT /api/users/:userId/recurring/:recurringId - Update a recurring transaction
  */
-router.put('/:recurringId', (req, res) => {
+router.put('/:recurringId', validateBody(updateRecurringSchema), (req, res) => {
   try {
     const { name, amount, type, categoryId, frequency, nextDueDate, notes, isActive } = req.body;
     const userId = req.params.userId;
@@ -166,18 +148,15 @@ router.put('/:recurringId', (req, res) => {
     
     const updates = {};
     
-    if (name && name.trim()) {
-      updates.name = name.trim();
+    if (name) {
+      updates.name = name;
     }
     
     if (amount !== undefined) {
-      if (amount <= 0) {
-        return res.status(400).json({ error: 'Amount must be a positive number' });
-      }
-      updates.amount = parseFloat(amount);
+      updates.amount = amount;
     }
     
-    if (type && ['income', 'expense'].includes(type)) {
+    if (type) {
       updates.type = type;
     }
     
@@ -189,7 +168,7 @@ router.put('/:recurringId', (req, res) => {
       updates.categoryId = categoryId;
     }
     
-    if (frequency && ['weekly', 'biweekly', 'monthly', 'quarterly', 'yearly'].includes(frequency)) {
+    if (frequency) {
       updates.frequency = frequency;
     }
     
