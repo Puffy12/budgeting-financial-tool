@@ -128,10 +128,13 @@ router.delete('/:userId', (req, res) => {
 
 /**
  * GET /api/users/:userId/stats/summary - Get user's financial summary
+ * Query params: month (0-11), year - optional, defaults to server's current date
+ * Client should pass these to ensure correct timezone handling
  */
 router.get('/:userId/stats/summary', (req, res) => {
   try {
     const userId = req.params.userId;
+    const { month, year } = req.query;
     
     if (!db.userExists(userId)) {
       return res.status(404).json({ error: 'User not found' });
@@ -140,14 +143,15 @@ router.get('/:userId/stats/summary', (req, res) => {
     const transactions = db.getAll('transactions', userId);
     const recurring = db.getAll('recurring', userId).filter(r => r.isActive);
     
+    // Use client-provided month/year if available, otherwise use server time
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const currentMonth = month !== undefined ? parseInt(month, 10) : now.getMonth();
+    const currentYear = year !== undefined ? parseInt(year, 10) : now.getFullYear();
     
-    // Filter transactions for current month
+    // Filter transactions for current month - parse date string directly to avoid timezone issues
     const currentMonthTransactions = transactions.filter(t => {
-      const date = new Date(t.date);
-      return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+      const [tYear, tMonth] = t.date.split('-').map(Number);
+      return (tMonth - 1) === currentMonth && tYear === currentYear;
     });
     
     // Calculate totals
@@ -211,11 +215,12 @@ router.get('/:userId/stats/summary', (req, res) => {
 
 /**
  * GET /api/users/:userId/stats/monthly - Get monthly breakdown
+ * Query params: months, month (0-11), year - month/year specify client's current month
  */
 router.get('/:userId/stats/monthly', (req, res) => {
   try {
     const userId = req.params.userId;
-    const { months = 6 } = req.query;
+    const { months = 6, month, year } = req.query;
     
     if (!db.userExists(userId)) {
       return res.status(404).json({ error: 'User not found' });
@@ -224,18 +229,22 @@ router.get('/:userId/stats/monthly', (req, res) => {
     const transactions = db.getAll('transactions', userId);
     const categories = db.getAll('categories', userId);
     
+    // Use client-provided month/year if available, otherwise use server time
     const now = new Date();
+    const baseMonth = month !== undefined ? parseInt(month, 10) : now.getMonth();
+    const baseYear = year !== undefined ? parseInt(year, 10) : now.getFullYear();
     const monthsToShow = parseInt(months, 10) || 6;
     const monthlyData = [];
     
     for (let i = 0; i < monthsToShow; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const month = date.getMonth();
-      const year = date.getFullYear();
+      const date = new Date(baseYear, baseMonth - i, 1);
+      const targetMonth = date.getMonth();
+      const targetYear = date.getFullYear();
       
+      // Parse date strings directly to avoid timezone issues
       const monthTransactions = transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate.getMonth() === month && tDate.getFullYear() === year;
+        const [tYear, tMonth] = t.date.split('-').map(Number);
+        return (tMonth - 1) === targetMonth && tYear === targetYear;
       });
       
       const income = monthTransactions
@@ -282,11 +291,12 @@ router.get('/:userId/stats/monthly', (req, res) => {
 
 /**
  * GET /api/users/:userId/stats/comparison - Get month-on-month comparison
+ * Query params: months, month (0-11), year - month/year specify client's current month
  */
 router.get('/:userId/stats/comparison', (req, res) => {
   try {
     const userId = req.params.userId;
-    const { months = 12 } = req.query;
+    const { months = 12, month, year } = req.query;
     
     if (!db.userExists(userId)) {
       return res.status(404).json({ error: 'User not found' });
@@ -295,17 +305,21 @@ router.get('/:userId/stats/comparison', (req, res) => {
     const transactions = db.getAll('transactions', userId);
     const monthsToCompare = parseInt(months, 10) || 12;
     
+    // Use client-provided month/year if available, otherwise use server time
     const now = new Date();
+    const baseMonth = month !== undefined ? parseInt(month, 10) : now.getMonth();
+    const baseYear = year !== undefined ? parseInt(year, 10) : now.getFullYear();
     const comparison = [];
     
     for (let i = 0; i < monthsToCompare; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const month = date.getMonth();
-      const year = date.getFullYear();
+      const date = new Date(baseYear, baseMonth - i, 1);
+      const targetMonth = date.getMonth();
+      const targetYear = date.getFullYear();
       
+      // Parse date strings directly to avoid timezone issues
       const monthTransactions = transactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate.getMonth() === month && tDate.getFullYear() === year;
+        const [tYear, tMonth] = t.date.split('-').map(Number);
+        return (tMonth - 1) === targetMonth && tYear === targetYear;
       });
       
       const income = monthTransactions

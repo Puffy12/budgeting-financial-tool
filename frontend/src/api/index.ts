@@ -43,14 +43,28 @@ export const usersApi = {
       method: 'DELETE',
     }),
   
-  getSummary: (userId: string) =>
-    fetchApi<Summary>(`/users/${userId}/stats/summary`),
+  getSummary: (userId: string, params?: { month?: number; year?: number }) => {
+    const searchParams = new URLSearchParams()
+    if (params) {
+      if (params.month !== undefined) searchParams.append('month', String(params.month))
+      if (params.year !== undefined) searchParams.append('year', String(params.year))
+    }
+    const query = searchParams.toString()
+    return fetchApi<Summary>(`/users/${userId}/stats/summary${query ? `?${query}` : ''}`)
+  },
   
   getMonthlyStats: (userId: string, months = 6) =>
     fetchApi<MonthlyData[]>(`/users/${userId}/stats/monthly?months=${months}`),
   
-  getComparison: (userId: string, months = 12) =>
-    fetchApi<ComparisonData[]>(`/users/${userId}/stats/comparison?months=${months}`),
+  getComparison: (userId: string, months = 12, params?: { month?: number; year?: number }) => {
+    const searchParams = new URLSearchParams()
+    searchParams.append('months', String(months))
+    if (params) {
+      if (params.month !== undefined) searchParams.append('month', String(params.month))
+      if (params.year !== undefined) searchParams.append('year', String(params.year))
+    }
+    return fetchApi<ComparisonData[]>(`/users/${userId}/stats/comparison?${searchParams.toString()}`)
+  },
 }
 
 // Categories API
