@@ -1,0 +1,73 @@
+---
+description: Budgeting app project conventions and patterns
+alwaysApply: true
+---
+
+# Budgeting Financial Tool - Project Conventions
+
+## Project Structure
+
+- `frontend/` - React 19 + TypeScript + Vite + TailwindCSS v4
+- `backend/` - Express.js with JSON file-based storage
+- Root `package.json` - Scripts for running both together
+
+## Running the App
+
+```bash
+npm run dev          # Run both frontend and backend
+npm run deploy       # Build and deploy to remote server
+```
+
+## Date & Timezone Handling (CRITICAL)
+
+Dates are stored as `YYYY-MM-DD` strings. Always handle timezone correctly:
+
+```typescript
+// ❌ BAD - causes timezone shift (Jan 27 becomes Jan 26 in PST)
+new Date("2026-01-27").toLocaleDateString()
+
+// ✅ GOOD - add T12:00:00 to prevent timezone shift
+new Date("2026-01-27T12:00:00").toLocaleDateString()
+```
+
+For backend date filtering, parse strings directly:
+
+```javascript
+// ❌ BAD - UTC timezone issues
+const date = new Date(t.date);
+return date.getMonth() === month;
+
+// ✅ GOOD - parse date string directly
+const [tYear, tMonth] = t.date.split('-').map(Number);
+return (tMonth - 1) === month && tYear === year;
+```
+
+For client-aware API calls, pass local month/year from frontend.
+
+## Icons - Use Lucide, Not Emojis
+
+Category icons use Lucide icon IDs, not emojis:
+
+```javascript
+// ❌ BAD
+icon: '🛒'
+
+// ✅ GOOD  
+icon: 'shopping-cart'
+```
+
+Icon IDs are defined in `frontend/src/utils/categoryIcons.ts`. Use `getIconById()` to render.
+
+## Backend API Patterns
+
+- Routes in `backend/routes/` (users, categories, transactions, recurring)
+- Database utilities in `backend/utils/db.js`
+- User data stored in `backend/data/{userId}/`
+
+## Frontend Patterns
+
+- Pages in `frontend/src/pages/`
+- API client in `frontend/src/api/index.ts`
+- Types in `frontend/src/types/index.ts`
+- Use `useTheme()` for dark/light mode (`isDark` boolean)
+- Use `useUser()` for current user context

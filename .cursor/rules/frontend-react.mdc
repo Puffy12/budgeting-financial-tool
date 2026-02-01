@@ -1,0 +1,68 @@
+---
+description: Frontend React/TypeScript conventions
+globs: frontend/**/*.{ts,tsx}
+alwaysApply: false
+---
+
+# Frontend React Conventions
+
+## Component Structure
+
+- Functional components only
+- Use `motion` from framer-motion for animations
+- Theme-aware styling with `isDark` from `useTheme()`
+
+```tsx
+const { resolvedTheme } = useTheme()
+const isDark = resolvedTheme === 'dark'
+
+// Apply conditional classes
+className={isDark ? 'bg-[#121214] text-white' : 'bg-white text-slate-900'}
+```
+
+## Styling
+
+- TailwindCSS v4 for styling
+- Dark mode colors: `bg-[#121214]`, `bg-[#1a1a1e]`, `border-[#242428]`
+- Light mode colors: `bg-white`, `bg-[#faf9f6]`, `border-[#ede9d5]`
+- Primary color: `primary-500` (defined in CSS variables)
+
+## Icons
+
+Always use `getIconById()` helper for category icons:
+
+```tsx
+import { getIconById } from '../utils/categoryIcons'
+
+const renderCategoryIcon = (iconId: string | undefined, className: string = '') => {
+  if (!iconId) return <Folder className={className} strokeWidth={1.75} />
+  const IconComponent = getIconById(iconId)
+  return <IconComponent className={className} strokeWidth={1.75} />
+}
+```
+
+## API Calls
+
+Use the typed API functions from `../api`:
+
+```tsx
+import { usersApi, transactionsApi, categoriesApi } from '../api'
+
+// Pass local timezone for date-sensitive queries
+const now = new Date()
+const data = await usersApi.getSummary(userId, { 
+  month: now.getMonth(), 
+  year: now.getFullYear() 
+})
+```
+
+## Date Display
+
+Always add `T12:00:00` when parsing date strings for display:
+
+```tsx
+{new Date(transaction.date + 'T12:00:00').toLocaleDateString('en-US', { 
+  month: 'short', 
+  day: 'numeric' 
+})}
+```
