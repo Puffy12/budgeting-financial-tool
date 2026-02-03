@@ -35,19 +35,20 @@ router.get('/', (req, res) => {
     let transactions = db.getAll('transactions', userId);
     const { month, year, type, categoryId, startDate, endDate, limit, offset } = req.query;
     
-    // Filter by month/year
+    // Filter by month/year - parse date string directly to avoid timezone issues
     if (month !== undefined && year !== undefined) {
       const m = parseInt(month, 10);
       const y = parseInt(year, 10);
       transactions = transactions.filter(t => {
-        const date = new Date(t.date);
-        return date.getMonth() === m && date.getFullYear() === y;
+        // Parse YYYY-MM-DD directly to avoid timezone issues
+        const [tYear, tMonth] = t.date.split('-').map(Number);
+        return (tMonth - 1) === m && tYear === y; // tMonth is 1-indexed, m is 0-indexed
       });
     } else if (year !== undefined) {
       const y = parseInt(year, 10);
       transactions = transactions.filter(t => {
-        const date = new Date(t.date);
-        return date.getFullYear() === y;
+        const tYear = parseInt(t.date.split('-')[0], 10);
+        return tYear === y;
       });
     }
     
@@ -69,8 +70,15 @@ router.get('/', (req, res) => {
       transactions = transactions.filter(t => t.categoryId === categoryId);
     }
     
-    // Sort by date (newest first)
-    transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort by date (newest first), then by createdAt for same-date transactions
+    transactions.sort((a, b) => {
+      // Compare dates as strings (YYYY-MM-DD format sorts correctly lexicographically)
+      if (b.date !== a.date) {
+        return b.date.localeCompare(a.date);
+      }
+      // For same date, sort by createdAt (newest first)
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    });
     
     // Pagination
     const total = transactions.length;

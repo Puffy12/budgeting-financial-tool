@@ -1,0 +1,86 @@
+---
+description: Backend Express.js conventions
+globs: backend/**/*.js
+alwaysApply: false
+---
+
+# Backend Express Conventions
+
+## Route Structure
+
+Routes are mounted at `/api/users/:userId/` prefix:
+- `routes/users.js` - User CRUD + stats endpoints
+- `routes/categories.js` - Category CRUD
+- `routes/transactions.js` - Transaction CRUD
+- `routes/recurring.js` - Recurring transaction management
+
+## Database (JSON File Storage)
+
+Use `db` utilities from `../utils/db`:
+
+```javascript
+const db = require('../utils/db');
+
+// Get all items for a user
+const items = db.getAll('transactions', userId);
+
+// Get by ID
+const item = db.getById('transactions', id, userId);
+
+// Insert
+db.insert('transactions', transaction, userId);
+
+// Update
+db.update('transactions', id, updates, userId);
+
+// Delete
+db.remove('transactions', id, userId);
+```
+
+## Date Handling
+
+Dates stored as `YYYY-MM-DD` strings. Parse directly to avoid timezone issues:
+
+```javascript
+// ❌ BAD - UTC timezone issues
+const date = new Date(t.date);
+return date.getMonth() === month;
+
+// ✅ GOOD - parse string directly
+const [tYear, tMonth] = t.date.split('-').map(Number);
+return (tMonth - 1) === month && tYear === year; // tMonth is 1-indexed
+```
+
+## Sorting Transactions
+
+Sort by date (newest first), then by createdAt for same-date:
+
+```javascript
+transactions.sort((a, b) => {
+  if (b.date !== a.date) {
+    return b.date.localeCompare(a.date); // YYYY-MM-DD sorts correctly
+  }
+  return new Date(b.createdAt) - new Date(a.createdAt);
+});
+```
+
+## Client Timezone Support
+
+Accept optional `month` and `year` query params to let frontend specify local time:
+
+```javascript
+const { month, year } = req.query;
+const now = new Date();
+const currentMonth = month !== undefined ? parseInt(month, 10) : now.getMonth();
+const currentYear = year !== undefined ? parseInt(year, 10) : now.getFullYear();
+```
+
+## Default Icon IDs (Not Emojis)
+
+```javascript
+// ❌ BAD
+icon: icon || '📋'
+
+// ✅ GOOD
+icon: icon || 'folder'
+```

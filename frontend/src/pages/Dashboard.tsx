@@ -62,9 +62,14 @@ export default function Dashboard() {
     if (!currentUser) return
     setLoading(true)
     try {
+      // Get the current month/year in the user's local timezone
+      const now = new Date()
+      const localMonth = now.getMonth()
+      const localYear = now.getFullYear()
+      
       const [summaryData, comparisonData, transactionsData] = await Promise.all([
-        usersApi.getSummary(currentUser.id),
-        usersApi.getComparison(currentUser.id, comparisonMonths),
+        usersApi.getSummary(currentUser.id, { month: localMonth, year: localYear }),
+        usersApi.getComparison(currentUser.id, comparisonMonths, { month: localMonth, year: localYear }),
         transactionsApi.getAll(currentUser.id, { limit: 5 }),
       ])
       setSummary(summaryData)
