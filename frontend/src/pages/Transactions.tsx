@@ -40,6 +40,17 @@ export default function Transactions() {
     }
   }, [currentUser, filter])
 
+  // Listen for transaction changes from QuickAdd modal
+  useEffect(() => {
+    const handleTransactionChange = () => {
+      if (currentUser) {
+        loadData()
+      }
+    }
+    window.addEventListener('transaction-changed', handleTransactionChange)
+    return () => window.removeEventListener('transaction-changed', handleTransactionChange)
+  }, [currentUser, filter])
+
   const loadData = async () => {
     if (!currentUser) return
     setLoading(true)
@@ -106,6 +117,8 @@ export default function Transactions() {
       }
       setShowModal(false)
       loadData()
+      // Notify other pages (like Dashboard) about the change
+      window.dispatchEvent(new CustomEvent('transaction-changed'))
     } catch (err) {
       console.error('Failed to save transaction:', err)
     }
@@ -118,6 +131,8 @@ export default function Transactions() {
       await transactionsApi.delete(currentUser.id, transactionId)
       setExpandedId(null)
       loadData()
+      // Notify other pages (like Dashboard) about the change
+      window.dispatchEvent(new CustomEvent('transaction-changed'))
     } catch (err) {
       console.error('Failed to delete transaction:', err)
     }

@@ -378,7 +378,14 @@ export default function Layout() {
       </motion.button>
 
       {/* Quick Add Modal */}
-      <QuickAddModal open={showQuickAdd} onClose={() => setShowQuickAdd(false)} />
+      <QuickAddModal 
+        open={showQuickAdd} 
+        onClose={() => setShowQuickAdd(false)} 
+        onSuccess={() => {
+          // Dispatch event to notify pages that a transaction was created
+          window.dispatchEvent(new CustomEvent('transaction-changed'))
+        }}
+      />
     </div>
   )
 }

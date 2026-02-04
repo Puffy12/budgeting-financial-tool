@@ -58,6 +58,17 @@ export default function Dashboard() {
     }
   }, [currentUser, comparisonMonths])
 
+  // Listen for transaction changes from QuickAdd modal or other sources
+  useEffect(() => {
+    const handleTransactionChange = () => {
+      if (currentUser) {
+        loadData()
+      }
+    }
+    window.addEventListener('transaction-changed', handleTransactionChange)
+    return () => window.removeEventListener('transaction-changed', handleTransactionChange)
+  }, [currentUser])
+
   const loadData = async () => {
     if (!currentUser) return
     setLoading(true)
@@ -370,7 +381,7 @@ export default function Dashboard() {
             Recent Transactions
           </h2>
           <Link
-            to="/app/transactions"
+            to="transactions"
             className="flex items-center gap-1.5 text-sm font-medium text-primary-500 transition-colors hover:text-primary-600"
           >
             View All
