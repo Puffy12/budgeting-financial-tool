@@ -80,7 +80,7 @@ function PinInput({
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center gap-3 justify-center">
+      <div className="flex items-center gap-2 sm:gap-3 justify-center">
         {[0, 1, 2, 3].map((i) => (
           <input
             key={i}
@@ -93,7 +93,7 @@ function PinInput({
             onKeyDown={(e) => handleKeyDown(i, e)}
             onPaste={handlePaste}
             disabled={disabled}
-            className={`h-14 w-14 rounded-xl border-2 text-center text-2xl font-bold transition-all duration-200 focus:outline-none ${
+            className={`h-12 w-12 sm:h-14 sm:w-14 rounded-xl border-2 text-center text-xl sm:text-2xl font-bold transition-all duration-200 focus:outline-none ${
               isDark
                 ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
                 : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20'
@@ -103,14 +103,14 @@ function PinInput({
         <button
           type="button"
           onClick={() => setShowPin(!showPin)}
-          className={`ml-1 flex h-10 w-10 items-center justify-center rounded-lg transition-colors ${
+          className={`ml-1 flex h-11 w-11 items-center justify-center rounded-lg transition-colors ${
             isDark
               ? 'text-[#52525e] hover:bg-[#1a1a1e] hover:text-white'
               : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-600'
           }`}
           tabIndex={-1}
         >
-          {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {showPin ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
         </button>
       </div>
     </div>
@@ -327,8 +327,8 @@ export default function Home() {
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25">
                       {au.user.name.charAt(0).toUpperCase()}
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className={`text-sm font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                         {au.user.name}
                       </p>
                     </div>

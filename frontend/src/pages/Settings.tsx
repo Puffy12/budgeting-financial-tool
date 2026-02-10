@@ -201,18 +201,18 @@ export default function Settings() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <h2 className={`mb-5 text-lg font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Appearance</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {themeOptions.map((t) => {
               const Icon = t.icon
               return (
                 <button key={t.value} onClick={() => setTheme(t.value)}
-                  className={`flex flex-col items-center gap-3 rounded-xl border-2 p-4 transition-all duration-200 active:scale-95 ${
+                  className={`flex flex-col items-center gap-2 sm:gap-3 rounded-xl border-2 p-3 sm:p-4 transition-all duration-200 active:scale-95 ${
                     theme === t.value
                       ? 'border-primary-500 bg-primary-500/10'
                       : isDark ? 'border-[#1a1a1e] hover:border-[#242428]' : 'border-[#ede9d5] hover:border-[#d4d0bc]'
                   }`}>
                   <Icon className={`h-6 w-6 ${theme === t.value ? 'text-primary-500' : isDark ? 'text-[#52525e]' : 'text-slate-400'}`} strokeWidth={1.75} />
-                  <span className={`text-sm font-medium ${theme === t.value ? 'text-primary-500' : isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>
+                  <span className={`text-xs sm:text-sm font-medium ${theme === t.value ? 'text-primary-500' : isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>
                     {t.label}
                   </span>
                 </button>
@@ -233,17 +233,17 @@ export default function Settings() {
               <p className={`text-sm ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Download your data as JSON</p>
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-3 gap-2 sm:flex sm:flex-wrap sm:gap-3">
             <button onClick={handleExportAll} disabled={exporting}
-              className={`rounded-xl border px-4 py-2.5 font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 sm:px-4 sm:py-2.5 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
               All Data
             </button>
             <button onClick={handleExportMonth} disabled={exporting}
-              className={`rounded-xl border px-4 py-2.5 font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 sm:px-4 sm:py-2.5 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
               This Month
             </button>
             <button onClick={handleExportYear} disabled={exporting}
-              className={`rounded-xl border px-4 py-2.5 font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
+              className={`rounded-xl border px-3 py-3 text-sm font-medium transition-all duration-200 active:scale-[0.98] disabled:opacity-50 sm:px-4 sm:py-2.5 ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
               This Year
             </button>
           </div>
@@ -263,9 +263,9 @@ export default function Settings() {
           </div>
           <div className="mb-4 flex gap-4">
             {(['merge', 'replace'] as const).map((m) => (
-              <label key={m} className="flex cursor-pointer items-center gap-2">
+              <label key={m} className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2">
                 <input type="radio" name="importMode" value={m} checked={importMode === m} onChange={() => setImportMode(m)} 
-                  className="h-4 w-4 border-2 text-primary-500 focus:ring-primary-500" />
+                  className="h-5 w-5 border-2 text-primary-500 focus:ring-primary-500" />
                 <span className={`text-sm ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>{m === 'merge' ? 'Merge' : 'Replace'}</span>
               </label>
             ))}
@@ -284,14 +284,14 @@ export default function Settings() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <h2 className={`mb-5 text-lg font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Actions</h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <button onClick={handleSwitchUser}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-medium transition-all duration-200 active:scale-[0.98] ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 font-medium transition-all duration-200 active:scale-[0.98] ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
               <UserCog className="h-4 w-4" strokeWidth={1.75} />
               Switch User
             </button>
             <button onClick={handleDeleteUser}
-              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 font-medium transition-all duration-200 active:scale-[0.98] ${isDark ? 'border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'}`}>
+              className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-3 font-medium transition-all duration-200 active:scale-[0.98] ${isDark ? 'border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'}`}>
               <Trash2 className="h-4 w-4" strokeWidth={1.75} />
               Delete Account
             </button>

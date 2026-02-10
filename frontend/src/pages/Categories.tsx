@@ -181,7 +181,7 @@ export default function Categories() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(category)}
-                        className={`rounded-lg p-2 transition-all duration-200 ${
+                        className={`rounded-lg p-2.5 transition-all duration-200 ${
                           isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                         }`}
                       >
@@ -189,7 +189,7 @@ export default function Categories() {
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className={`rounded-lg p-2 transition-all duration-200 ${
+                        className={`rounded-lg p-2.5 transition-all duration-200 ${
                           isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                         }`}
                       >
@@ -233,7 +233,7 @@ export default function Categories() {
                     <div className="flex items-center gap-1">
                       <button
                         onClick={() => openEditModal(category)}
-                        className={`rounded-lg p-2 transition-all duration-200 ${
+                        className={`rounded-lg p-2.5 transition-all duration-200 ${
                           isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                         }`}
                       >
@@ -241,7 +241,7 @@ export default function Categories() {
                       </button>
                       <button
                         onClick={() => handleDelete(category.id)}
-                        className={`rounded-lg p-2 transition-all duration-200 ${
+                        className={`rounded-lg p-2.5 transition-all duration-200 ${
                           isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                         }`}
                       >
@@ -335,7 +335,7 @@ export default function Categories() {
                 {/* Icon Picker */}
                 <div>
                   <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Icon</label>
-                  <div className={`grid grid-cols-8 gap-2 rounded-xl border p-3 ${
+                  <div className={`grid grid-cols-6 gap-2 rounded-xl border p-3 sm:grid-cols-8 ${
                     isDark ? 'border-[#242428] bg-[#1a1a1e]' : 'border-[#ede9d5] bg-[#faf9f6]'
                   }`}>
                     {CATEGORY_ICONS.map((iconOption) => {
@@ -345,7 +345,7 @@ export default function Categories() {
                           key={iconOption.id}
                           type="button"
                           onClick={() => setFormData({ ...formData, icon: iconOption.id })}
-                          className={`flex h-10 w-10 items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
+                          className={`flex h-11 w-full items-center justify-center rounded-lg transition-all duration-200 active:scale-90 ${
                             formData.icon === iconOption.id
                               ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
                               : isDark ? 'bg-[#242428] text-[#52525e] hover:bg-[#2e2e34] hover:text-white' : 'bg-white text-slate-500 hover:bg-[#ede9d5] hover:text-slate-700'

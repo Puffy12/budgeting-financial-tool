@@ -122,18 +122,19 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`fixed inset-x-2 bottom-2 z-50 overflow-hidden rounded-3xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 ${
+            className={`fixed inset-x-2 z-50 overflow-hidden rounded-3xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 ${
               isDark ? 'bg-[#0a0a0b]' : 'bg-white'
             }`}
             style={{ 
-              maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 80px)',
+              bottom: 'max(8px, env(safe-area-inset-bottom))',
+              maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)',
             }}
           >
             {/* Scrollable Content */}
             <div 
               className="overflow-y-auto"
               style={{ 
-                maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 80px)',
+                maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)',
                 paddingBottom: 'env(safe-area-inset-bottom)'
               }}
             >
@@ -195,7 +196,7 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
 
                 {/* Amount Display - Mobile */}
                 <div className="px-5 py-6 text-center sm:hidden">
-                  <div className={`text-5xl font-bold tabular-nums tracking-tight ${
+                  <div className={`text-4xl font-bold tabular-nums tracking-tight ${
                     type === 'expense' 
                       ? isDark ? 'text-red-400' : 'text-red-500'
                       : isDark ? 'text-emerald-400' : 'text-emerald-500'
@@ -303,7 +304,7 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
                               key={cat.id}
                               type="button"
                               onClick={() => handleSelectCategory(cat.id)}
-                              className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-3 py-2 transition-all duration-200 active:scale-95 ${
+                              className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-3.5 py-2.5 transition-all duration-200 active:scale-95 ${
                                 categoryId === cat.id
                                   ? type === 'expense'
                                     ? 'border-red-500 bg-red-500/10 text-red-500'

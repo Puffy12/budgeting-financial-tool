@@ -202,12 +202,12 @@ export default function Transactions() {
       </div>
 
       {/* Summary Cards */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className={`rounded-xl p-3 sm:p-4 accent-income ${isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80'}`}>
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>
             Income
           </p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
             {formatCurrency(totalIncome)}
           </p>
         </div>
@@ -215,15 +215,15 @@ export default function Transactions() {
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-red-400/70' : 'text-red-600/70'}`}>
             Expenses
           </p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
             {formatCurrency(totalExpenses)}
           </p>
         </div>
-        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
+        <div className={`col-span-2 sm:col-span-1 rounded-xl p-3 sm:p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
             Net
           </p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${
             totalIncome - totalExpenses >= 0
               ? isDark ? 'text-emerald-400' : 'text-emerald-700'
               : isDark ? 'text-red-400' : 'text-red-700'

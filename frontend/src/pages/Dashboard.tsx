@@ -212,17 +212,21 @@ export default function Dashboard() {
     ],
   }
 
+  // Detect mobile for chart legend position
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+  const legendPosition: 'bottom' | 'right' = isMobile ? 'bottom' : 'right'
+
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '65%',
     plugins: {
       legend: {
-        position: 'right' as const,
+        position: legendPosition,
         labels: { 
           color: chartColors.text, 
           boxWidth: 10, 
-          padding: 12,
+          padding: isMobile ? 8 : 12,
           usePointStyle: true,
           pointStyle: 'circle',
           font: { size: 11 },
@@ -272,7 +276,7 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Grid */}
-      <div className="mb-8 grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Income"
           value={formatCurrency(summary?.currentMonth.income || 0)}

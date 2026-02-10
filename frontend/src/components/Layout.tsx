@@ -376,8 +376,11 @@ export default function Layout() {
         animate={{ scale: 1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setShowQuickAdd(true)}
-        className="fixed bottom-6 right-6 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/40 lg:hidden safe-area-bottom"
-        style={{ marginBottom: 'env(safe-area-inset-bottom, 0)' }}
+        className="fixed z-30 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/40 lg:hidden"
+        style={{ 
+          bottom: 'max(24px, calc(env(safe-area-inset-bottom, 0px) + 16px))',
+          right: 'max(24px, env(safe-area-inset-right, 0px))'
+        }}
       >
         <Plus className="h-6 w-6" strokeWidth={2} />
       </motion.button>

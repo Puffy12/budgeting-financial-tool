@@ -209,22 +209,22 @@ export default function Recurring() {
       </div>
 
       {/* Summary */}
-      <div className="mb-6 grid grid-cols-3 gap-3">
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div className={`rounded-xl p-3 sm:p-4 accent-expense ${isDark ? 'bg-red-500/8' : 'bg-red-50/80'}`}>
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-red-400/70' : 'text-red-600/70'}`}>Expenses/mo</p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${isDark ? 'text-red-400' : 'text-red-700'}`}>
             {formatCurrency(totalMonthlyExpenses)}
           </p>
         </div>
         <div className={`rounded-xl p-3 sm:p-4 accent-income ${isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80'}`}>
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>Income/mo</p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>
             {formatCurrency(totalMonthlyIncome)}
           </p>
         </div>
-        <div className={`rounded-xl p-3 sm:p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
+        <div className={`col-span-2 sm:col-span-1 rounded-xl p-3 sm:p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
           <p className={`text-xs font-medium uppercase tracking-wider sm:text-[11px] ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Net/mo</p>
-          <p className={`mt-1 text-lg font-bold tabular-nums sm:text-xl ${
+          <p className={`mt-1 text-base font-bold tabular-nums sm:text-xl ${
             totalMonthlyIncome - totalMonthlyExpenses >= 0
               ? isDark ? 'text-emerald-400' : 'text-emerald-700'
               : isDark ? 'text-red-400' : 'text-red-700'
@@ -305,7 +305,7 @@ export default function Recurring() {
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => handleToggleActive(rec)}
-                      className={`rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all duration-200 ${
+                      className={`rounded-lg px-3 py-2 text-xs font-medium transition-all duration-200 ${
                         rec.isActive
                           ? isDark ? 'bg-emerald-500/15 text-emerald-400' : 'bg-emerald-100 text-emerald-700'
                           : isDark ? 'bg-[#242428] text-[#3d3d45]' : 'bg-slate-100 text-slate-500'
@@ -315,7 +315,7 @@ export default function Recurring() {
                     </button>
                     <button
                       onClick={() => handleProcess(rec.id)}
-                      className={`rounded-lg p-2 transition-all duration-200 ${
+                      className={`rounded-lg p-2.5 transition-all duration-200 ${
                         isDark ? 'text-[#3d3d45] hover:bg-blue-500/15 hover:text-blue-400' : 'text-slate-400 hover:bg-blue-50 hover:text-blue-600'
                       }`}
                       title="Create transaction now"
@@ -324,7 +324,7 @@ export default function Recurring() {
                     </button>
                     <button
                       onClick={() => openEditModal(rec)}
-                      className={`rounded-lg p-2 transition-all duration-200 ${
+                      className={`rounded-lg p-2.5 transition-all duration-200 ${
                         isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-white' : 'text-slate-400 hover:bg-[#f5f5dc] hover:text-slate-700'
                       }`}
                     >
@@ -332,7 +332,7 @@ export default function Recurring() {
                     </button>
                     <button
                       onClick={() => handleDelete(rec.id)}
-                      className={`rounded-lg p-2 transition-all duration-200 ${
+                      className={`rounded-lg p-2.5 transition-all duration-200 ${
                         isDark ? 'text-[#3d3d45] hover:bg-red-500/15 hover:text-red-400' : 'text-slate-400 hover:bg-red-50 hover:text-red-600'
                       }`}
                     >
@@ -406,7 +406,7 @@ export default function Recurring() {
                 </div>
 
                 {/* Name & Amount */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Name</label>
                     <input
@@ -438,7 +438,7 @@ export default function Recurring() {
                 </div>
 
                 {/* Category & Frequency */}
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
                     <label className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Category</label>
                     <select

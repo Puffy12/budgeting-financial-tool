@@ -130,17 +130,20 @@ export default function Breakdown() {
     datasets: [{ data: sortedCategories.map(([, amount]) => amount), backgroundColor: pieColors.slice(0, sortedCategories.length), borderWidth: 0, hoverOffset: 4 }],
   }
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640
+  const legendPosition: 'bottom' | 'right' = isMobile ? 'bottom' : 'right'
+
   const doughnutOptions = {
     responsive: true,
     maintainAspectRatio: false,
     cutout: '65%',
     plugins: { 
       legend: { 
-        position: 'right' as const, 
+        position: legendPosition, 
         labels: { 
           color: chartColors.text, 
           boxWidth: 10, 
-          padding: 10,
+          padding: isMobile ? 8 : 10,
           usePointStyle: true,
           pointStyle: 'circle',
           font: { size: 11 },
@@ -248,25 +251,25 @@ export default function Breakdown() {
               className={`rounded-xl p-4 accent-income ${isDark ? 'bg-emerald-500/8' : 'bg-emerald-50/80'}`}>
               <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-emerald-400/70' : 'text-emerald-600/70'}`}>Total Income</p>
               <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-700'}`}>{formatCurrency(totalIncome)}</p>
-              <p className={`mt-1 text-[10px] ${isDark ? 'text-emerald-500/50' : 'text-emerald-600/50'}`}>Avg: {formatCurrency(avgIncome)}/mo</p>
+              <p className={`mt-1 text-xs ${isDark ? 'text-emerald-500/50' : 'text-emerald-600/50'}`}>Avg: {formatCurrency(avgIncome)}/mo</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}
               className={`rounded-xl p-4 accent-expense ${isDark ? 'bg-red-500/8' : 'bg-red-50/80'}`}>
               <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-red-400/70' : 'text-red-600/70'}`}>Total Expenses</p>
               <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalExpenses)}</p>
-              <p className={`mt-1 text-[10px] ${isDark ? 'text-red-500/50' : 'text-red-600/50'}`}>Avg: {formatCurrency(avgExpenses)}/mo</p>
+              <p className={`mt-1 text-xs ${isDark ? 'text-red-500/50' : 'text-red-600/50'}`}>Avg: {formatCurrency(avgExpenses)}/mo</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
               className={`rounded-xl p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
               <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Net Savings</p>
               <p className={`mt-1 text-xl font-bold tabular-nums ${totalDifference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-700' : isDark ? 'text-red-400' : 'text-red-700'}`}>{formatCurrency(totalDifference)}</p>
-              <p className={`mt-1 text-[10px] ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Rate: {totalIncome > 0 ? ((totalDifference / totalIncome) * 100).toFixed(0) : 0}%</p>
+              <p className={`mt-1 text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Rate: {totalIncome > 0 ? ((totalDifference / totalIncome) * 100).toFixed(0) : 0}%</p>
             </motion.div>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3, duration: 0.3 }}
               className={`rounded-xl p-4 ${isDark ? 'bg-[#1a1a1e]' : 'bg-white border border-[#ede9d5]'}`}>
               <p className={`text-xs font-medium uppercase tracking-wider ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>Transactions</p>
               <p className={`mt-1 text-xl font-bold tabular-nums ${isDark ? 'text-white' : 'text-slate-700'}`}>{monthlyData.reduce((sum, m) => sum + m.transactionCount, 0)}</p>
-              <p className={`mt-1 text-[10px] ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Avg: {Math.round(monthlyData.reduce((sum, m) => sum + m.transactionCount, 0) / Math.max(monthlyData.length, 1))}/mo</p>
+              <p className={`mt-1 text-xs ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>Avg: {Math.round(monthlyData.reduce((sum, m) => sum + m.transactionCount, 0) / Math.max(monthlyData.length, 1))}/mo</p>
             </motion.div>
           </div>
 
@@ -300,7 +303,31 @@ export default function Breakdown() {
             <div className={`border-b px-5 py-4 sm:px-6 ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
               <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Monthly Breakdown</h2>
             </div>
-            <div className="overflow-x-auto">
+
+            {/* Mobile Card View */}
+            <div className={`divide-y sm:hidden ${isDark ? 'divide-[#1a1a1e]' : 'divide-[#ede9d5]'}`}>
+              {monthlyData.map((month) => (
+                <div key={month.fullDate} className="px-5 py-3.5">
+                  <p className={`mb-2 text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>{month.month} {month.year}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`text-xs tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>+{formatCurrency(month.income)}</span>
+                    <span className={`text-xs tabular-nums ${isDark ? 'text-red-400' : 'text-red-600'}`}>-{formatCurrency(month.expenses)}</span>
+                    <span className={`text-xs font-semibold tabular-nums ${month.difference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(month.difference)}</span>
+                  </div>
+                </div>
+              ))}
+              <div className={`px-5 py-3.5 ${isDark ? 'bg-[#1a1a1e]/30' : 'bg-[#faf9f6]'}`}>
+                <p className={`mb-2 text-sm font-semibold ${isDark ? 'text-white' : 'text-slate-900'}`}>Total</p>
+                <div className="flex items-center justify-between gap-2">
+                  <span className={`text-xs font-semibold tabular-nums ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>+{formatCurrency(totalIncome)}</span>
+                  <span className={`text-xs font-semibold tabular-nums ${isDark ? 'text-red-400' : 'text-red-600'}`}>-{formatCurrency(totalExpenses)}</span>
+                  <span className={`text-xs font-bold tabular-nums ${totalDifference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(totalDifference)}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden overflow-x-auto sm:block">
               <table className="w-full">
                 <thead>
                   <tr className={`border-b ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
@@ -343,7 +370,32 @@ export default function Breakdown() {
               <div className={`border-b px-5 py-4 sm:px-6 ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
                 <h2 className={`text-base font-semibold tracking-tight sm:text-lg ${isDark ? 'text-white' : 'text-slate-900'}`}>Category Breakdown</h2>
               </div>
-              <div className="overflow-x-auto">
+              {/* Mobile Card View */}
+              <div className={`divide-y sm:hidden ${isDark ? 'divide-[#1a1a1e]' : 'divide-[#ede9d5]'}`}>
+                {sortedCategories.map(([name, amount], idx) => {
+                  const category = categories.find(c => c.name === name)
+                  return (
+                    <div key={name} className="flex items-center justify-between px-5 py-3.5">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: pieColors[idx % pieColors.length] }} />
+                        <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
+                          {renderCategoryIcon(category?.icon, `h-4 w-4 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`)}
+                        </div>
+                        <span className={`truncate text-sm font-medium ${isDark ? 'text-white' : 'text-slate-900'}`}>{name}</span>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0 pl-3">
+                        <span className={`text-sm font-semibold tabular-nums ${isDark ? 'text-white' : 'text-slate-900'}`}>{formatCurrency(amount)}</span>
+                        <span className={`text-xs tabular-nums ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`}>
+                          {totalExpenses > 0 ? (amount / totalExpenses * 100).toFixed(1) : 0}%
+                        </span>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden overflow-x-auto sm:block">
                 <table className="w-full">
                   <thead>
                     <tr className={`border-b ${isDark ? 'border-[#1a1a1e]' : 'border-[#ede9d5]'}`}>
