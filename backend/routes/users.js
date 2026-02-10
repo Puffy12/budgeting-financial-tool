@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcryptjs');
 const db = require('../utils/db');
 const { validateBody, validateQuery } = require('../middleware/validate');
 const { createUserSchema, updateUserSchema, monthlyQuerySchema } = require('../validation/schemas');
@@ -41,16 +42,26 @@ router.get('/:userId', (req, res) => {
 /**
  * POST /api/users - Create a new user
  */
-router.post('/', validateBody(createUserSchema), (req, res) => {
+router.post('/', validateBody(createUserSchema), async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, pin } = req.body;
+    
+    // Check if user with this name already exists
+    const existing = db.getUserByName(name);
+    if (existing) {
+      return res.status(409).json({ error: 'A user with that name already exists' });
+    }
     
     const userId = uuidv4();
     const now = new Date().toISOString();
     
+    // Hash the PIN
+    const pinHash = await bcrypt.hash(pin, 12);
+    
     const user = {
       id: userId,
       name,
+      pinHash,
       createdAt: now,
       updatedAt: now
     };
@@ -70,7 +81,9 @@ router.post('/', validateBody(createUserSchema), (req, res) => {
     
     db.insertMany('categories', defaultCategories, userId);
     
-    res.status(201).json(user);
+    // Return user without pinHash
+    const { pinHash: _pinHash, ...safeUser } = user;
+    res.status(201).json(safeUser);
   } catch (error) {
     console.error('Error creating user:', error);
     res.status(500).json({ error: 'Failed to create user' });

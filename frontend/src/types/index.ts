@@ -96,3 +96,27 @@ export interface ComparisonData {
 
 export type TransactionType = 'income' | 'expense'
 export type Frequency = 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly'
+
+// Auth types
+export interface AuthLoginResponse {
+  token: string
+  user: User
+}
+
+export interface AuthNeedsPinResponse {
+  needsPin: true
+  userId: string
+  name: string
+}
+
+export interface AuthValidateResponse {
+  valid: boolean
+  user: User
+}
+
+export type PinLoginResult = AuthLoginResponse | AuthNeedsPinResponse
+
+export interface AuthenticatedUser {
+  user: User
+  token: string
+}

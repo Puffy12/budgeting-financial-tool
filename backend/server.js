@@ -21,6 +21,7 @@ const categoriesRouter = require('./routes/categories');
 const transactionsRouter = require('./routes/transactions');
 const recurringRouter = require('./routes/recurring');
 const exportRouter = require('./routes/export');
+const authRouter = require('./routes/auth');
 
 // Import utilities
 const db = require('./utils/db');
@@ -280,7 +281,8 @@ app.use((req, res, next) => {
   if (req.path === '/check-password' || 
       req.path === '/password.html' || 
       req.path === '/health' ||
-      req.path === '/logout') {
+      req.path === '/logout' ||
+      req.path.startsWith('/api/auth/')) {
     return next();
   }
   
@@ -385,7 +387,7 @@ if (!hasFrontend) {
 // This must come BEFORE the API routes to intercept browser navigation requests
 if (hasFrontend) {
   // Frontend routes that should serve the SPA
-  const frontendRoutes = ['/', '/dashboard', '/transactions', '/recurring', '/categories', '/breakdown', '/settings'];
+  const frontendRoutes = ['/', '/app', '/dashboard', '/transactions', '/recurring', '/categories', '/breakdown', '/settings'];
   
   app.use((req, res, next) => {
     // Only handle GET requests
@@ -431,6 +433,7 @@ if (hasFrontend) {
 // ============ API Routes ============
 
 // Mount API routes
+app.use('/api/auth', authRouter);
 app.use('/api/users', usersRouter);
 app.use('/api/users/:userId/categories', categoriesRouter);
 app.use('/api/users/:userId/transactions', transactionsRouter);

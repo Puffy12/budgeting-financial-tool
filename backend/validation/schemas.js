@@ -19,13 +19,20 @@ const frequencySchema = z.enum(['weekly', 'biweekly', 'monthly', 'quarterly', 'y
 
 const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be in YYYY-MM-DD format');
 
+// ============ PIN Schema ============
+
+const pinSchema = z.string()
+  .length(4, 'PIN must be exactly 4 digits')
+  .regex(/^\d{4}$/, 'PIN must be exactly 4 digits');
+
 // ============ User Schemas ============
 
 const createUserSchema = z.object({
   name: z.string()
     .min(1, 'Name is required')
     .max(100, 'Name must be 100 characters or less')
-    .trim()
+    .trim(),
+  pin: pinSchema
 });
 
 const updateUserSchema = z.object({
@@ -181,6 +188,24 @@ const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, 'Refresh token is required')
 });
 
+// PIN-based auth schemas
+const pinLoginSchema = z.object({
+  name: z.string()
+    .min(1, 'Username is required')
+    .max(100, 'Username must be 100 characters or less')
+    .trim(),
+  pin: pinSchema
+});
+
+const setPinSchema = z.object({
+  userId: uuidSchema,
+  pin: pinSchema
+});
+
+const validateTokenSchema = z.object({
+  token: z.string().min(1, 'Token is required')
+});
+
 module.exports = {
   // Common
   uuidSchema,
@@ -214,5 +239,9 @@ module.exports = {
   
   // Auth
   loginSchema,
-  refreshTokenSchema
+  refreshTokenSchema,
+  pinLoginSchema,
+  setPinSchema,
+  validateTokenSchema,
+  pinSchema
 };

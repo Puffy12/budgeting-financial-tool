@@ -60,7 +60,7 @@ function ThemeToggle({ className = '' }: { className?: string }) {
 }
 
 export default function Layout() {
-  const { currentUser, setCurrentUser, users, loading } = useUser()
+  const { currentUser, setCurrentUser, authenticatedUsers, loading, logout } = useUser()
   const { resolvedTheme } = useTheme()
   const navigate = useNavigate()
   const { userId } = useParams<{ userId: string }>()
@@ -76,20 +76,25 @@ export default function Layout() {
       return
     }
 
-    // If we have a userId in URL but no currentUser, or different user, load from users list
+    // If we have a userId in URL but no currentUser, or different user, load from authenticated users
     if (!currentUser || currentUser.id !== userId) {
-      const user = users.find(u => u.id === userId)
-      if (user) {
-        setCurrentUser(user)
+      const found = authenticatedUsers.find(au => au.user.id === userId)
+      if (found) {
+        setCurrentUser(found.user)
       } else {
-        // User not found, redirect to home
+        // User not authenticated, redirect to home
         navigate('/')
       }
     }
-  }, [userId, users, loading, currentUser, setCurrentUser, navigate])
+  }, [userId, authenticatedUsers, loading, currentUser, setCurrentUser, navigate])
 
   const handleSwitchUser = () => {
     setCurrentUser(null)
+    navigate('/')
+  }
+
+  const handleLogout = () => {
+    logout()
     navigate('/')
   }
 
@@ -188,7 +193,7 @@ export default function Layout() {
 
             {/* Logout */}
             <button
-              onClick={handleSwitchUser}
+              onClick={handleLogout}
               className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
                 isDark
                   ? 'text-red-400/70 hover:bg-red-500/10 hover:text-red-400'
@@ -340,7 +345,7 @@ export default function Layout() {
                   <button
                     onClick={() => {
                       setMobileNavOpen(false)
-                      handleSwitchUser()
+                      handleLogout()
                     }}
                     className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-base font-medium transition-all active:scale-[0.98] ${
                       isDark

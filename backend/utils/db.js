@@ -175,6 +175,14 @@ function deleteUser(userId) {
 }
 
 /**
+ * Get user by name (case-insensitive)
+ */
+function getUserByName(name) {
+  const users = getAllUsers();
+  return users.find(u => u.name.toLowerCase() === name.toLowerCase());
+}
+
+/**
  * Check if user exists
  */
 function userExists(userId) {
@@ -374,6 +382,7 @@ module.exports = {
   // Users
   getAllUsers,
   getUserById,
+  getUserByName,
   insertUser,
   updateUser,
   deleteUser,

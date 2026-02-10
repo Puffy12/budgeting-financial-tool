@@ -3,6 +3,14 @@
     "id": "49db2d87-ed71-4839-b423-807b2d8435b7",
     "name": "Mike",
     "createdAt": "2026-01-25T20:48:38.705Z",
-    "updatedAt": "2026-01-25T20:48:38.705Z"
+    "updatedAt": "2026-02-10T01:35:45.811Z",
+    "pinHash": "$2b$12$xtFg/gMy5IDhfP5IotiiieKWjA3yU4/T.VNd693lq5fzV0/7/HZnW"
+  },
+  {
+    "id": "eca5a2eb-f9fc-41bb-9793-7aceb0210c36",
+    "name": "test",
+    "pinHash": "$2b$12$OzhSaks//G735J13C14oa.5C5LOp21RzyhBQ7G6RQcyagKVXKveKe",
+    "createdAt": "2026-02-10T01:35:27.970Z",
+    "updatedAt": "2026-02-10T01:35:27.970Z"
   }
 ]

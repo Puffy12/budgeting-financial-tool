@@ -1,4 +1,4 @@
-import type { User, Category, Transaction, RecurringTransaction, Summary, MonthlyData, ComparisonData } from '../types'
+import type { User, Category, Transaction, RecurringTransaction, Summary, MonthlyData, ComparisonData, PinLoginResult, AuthLoginResponse, AuthValidateResponse } from '../types'
 
 const API_BASE = '/api'
 
@@ -20,16 +20,37 @@ async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> 
   return response.json()
 }
 
+// Auth API
+export const authApi = {
+  login: (name: string, pin: string) =>
+    fetchApi<PinLoginResult>('/auth/pin-login', {
+      method: 'POST',
+      body: JSON.stringify({ name, pin }),
+    }),
+
+  setPin: (userId: string, pin: string) =>
+    fetchApi<AuthLoginResponse>('/auth/set-pin', {
+      method: 'POST',
+      body: JSON.stringify({ userId, pin }),
+    }),
+
+  validateToken: (token: string) =>
+    fetchApi<AuthValidateResponse>('/auth/validate-token', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
+}
+
 // Users API
 export const usersApi = {
   getAll: () => fetchApi<User[]>('/users'),
   
   getById: (userId: string) => fetchApi<User>(`/users/${userId}`),
   
-  create: (name: string) => 
+  create: (name: string, pin: string) => 
     fetchApi<User>('/users', {
       method: 'POST',
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name, pin }),
     }),
   
   update: (userId: string, name: string) =>

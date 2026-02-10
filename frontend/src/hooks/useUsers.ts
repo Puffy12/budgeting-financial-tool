@@ -70,7 +70,7 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (name: string) => usersApi.create(name),
+    mutationFn: ({ name, pin }: { name: string; pin: string }) => usersApi.create(name, pin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users })
       toast.success('User created successfully')
