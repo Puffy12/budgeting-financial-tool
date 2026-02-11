@@ -310,7 +310,7 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
                                     ? 'border-red-500 bg-red-500/10 text-red-500'
                                     : 'border-emerald-500 bg-emerald-500/10 text-emerald-500'
                                   : isDark
-                                  ? 'border-[#1a1a1e] bg-[#121214] text-[#52525e]'
+                                  ? 'border-[#1a1a1e] bg-[#121214] text-white'
                                   : 'border-[#ede9d5] bg-[#faf9f6] text-slate-500'
                               }`}
                             >
