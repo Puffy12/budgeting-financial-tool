@@ -122,21 +122,13 @@ export default function QuickAddModal({ open, onClose, onSuccess }: QuickAddModa
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 100 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className={`fixed inset-x-2 z-50 overflow-hidden rounded-3xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 ${
+            className={`fixed inset-x-2 z-50 overflow-hidden rounded-3xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:w-full sm:max-w-md sm:-translate-x-1/2 sm:-translate-y-1/2 bottom-[max(8px,env(safe-area-inset-bottom))] max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-16px)] sm:max-h-[85vh] ${
               isDark ? 'bg-[#0a0a0b]' : 'bg-white'
             }`}
-            style={{ 
-              bottom: 'max(8px, env(safe-area-inset-bottom))',
-              maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)',
-            }}
           >
             {/* Scrollable Content */}
             <div 
-              className="overflow-y-auto"
-              style={{ 
-                maxHeight: 'calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px)',
-                paddingBottom: 'env(safe-area-inset-bottom)'
-              }}
+              className="overflow-y-auto max-h-[calc(100vh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-16px)] pb-[env(safe-area-inset-bottom)] sm:max-h-[85vh] sm:pb-0"
             >
               {/* Handle bar */}
               <div className="flex justify-center py-3 sm:hidden">
