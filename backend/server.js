@@ -31,7 +31,7 @@ const { processRecurringTransactions } = require('./utils/recurringProcessor');
 const { apiLimiter, authLimiter, writeLimiter } = require('./middleware/rateLimiter');
 
 // Import JWT auth
-const { generateTokens, refreshAccessToken, revokeRefreshToken, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } = require('./auth/jwt');
+const { generateTokens, refreshAccessToken, revokeRefreshToken, ACCESS_TOKEN_EXPIRY } = require('./auth/jwt');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,8 +46,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Development mode - disables authentication for local testing
 const DEV_MODE = process.env.DEV_MODE === 'true' && !isProduction;
 
-// Password protection settings
-const DASHBOARD_PASSWORD = process.env.DEV_DASHBOARD_PASSWORD;
+// Password protection settings - DISABLED
+const DASHBOARD_PASSWORD = null //process.env.DEV_DASHBOARD_PASSWORD;
 const AUTH_COOKIE_NAME = 'budget_app_auth';
 const AUTH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
 
