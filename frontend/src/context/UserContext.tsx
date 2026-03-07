@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { User, AuthenticatedUser } from '../types'
-import { authApi, usersApi } from '../api'
+import { authApi, usersApi, setApiToken } from '../api'
 
 const AUTH_TOKENS_KEY = 'auth_tokens'
 
@@ -86,6 +86,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       if (lastUserId) {
         const found = validUsers.find(au => au.user.id === lastUserId)
         if (found) {
+          setApiToken(found.token)
           setCurrentUser(found.user)
         }
       }
@@ -100,13 +101,33 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
-  // Persist current user ID
+  // Persist current user ID and set API token
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem('currentUserId', currentUser.id)
+      const tokens = getStoredTokens()
+      setApiToken(tokens[currentUser.id] || null)
     } else {
       localStorage.removeItem('currentUserId')
+      setApiToken(null)
     }
+  }, [currentUser])
+
+  // Listen for unauthorized events (invalid/expired token)
+  useEffect(() => {
+    const handler = () => {
+      if (currentUser) {
+        const targetId = currentUser.id
+        const tokens = getStoredTokens()
+        delete tokens[targetId]
+        saveTokens(tokens)
+        setAuthenticatedUsers(prev => prev.filter(au => au.user.id !== targetId))
+        setCurrentUser(null)
+        setApiToken(null)
+      }
+    }
+    window.addEventListener('auth:unauthorized', handler)
+    return () => window.removeEventListener('auth:unauthorized', handler)
   }, [currentUser])
 
   /**
@@ -131,6 +152,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       tokens[user.id] = token
       saveTokens(tokens)
 
+      // Set API token immediately
+      setApiToken(token)
+
       // Add to authenticated users (replace if exists)
       setAuthenticatedUsers(prev => {
         const filtered = prev.filter(au => au.user.id !== user.id)
@@ -151,28 +175,24 @@ export function UserProvider({ children }: { children: ReactNode }) {
    */
   const signup = useCallback(async (name: string, pin: string) => {
     setError(null)
-    // Create user
-    const user = await usersApi.create(name, pin)
+    const result = await authApi.register(name, pin)
+    const { token, user } = result
 
-    // Now log in to get the token
-    const loginResult = await authApi.login(name, pin)
+    // Store token
+    const tokens = getStoredTokens()
+    tokens[user.id] = token
+    saveTokens(tokens)
 
-    if ('token' in loginResult && 'user' in loginResult) {
-      const { token } = loginResult
+    // Set API token immediately
+    setApiToken(token)
 
-      // Store token
-      const tokens = getStoredTokens()
-      tokens[user.id] = token
-      saveTokens(tokens)
+    // Add to authenticated users
+    setAuthenticatedUsers(prev => {
+      const filtered = prev.filter(au => au.user.id !== user.id)
+      return [...filtered, { user, token }]
+    })
 
-      // Add to authenticated users
-      setAuthenticatedUsers(prev => {
-        const filtered = prev.filter(au => au.user.id !== user.id)
-        return [...filtered, { user: loginResult.user, token }]
-      })
-
-      setCurrentUser(loginResult.user)
-    }
+    setCurrentUser(user)
 
     return user
   }, [])

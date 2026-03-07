@@ -4,19 +4,22 @@
 
 const express = require('express');
 const router = express.Router();
-const { v4: uuidv4 } = require('uuid');
-const bcrypt = require('bcryptjs');
 const db = require('../utils/db');
 const { validateBody, validateQuery } = require('../middleware/validate');
-const { createUserSchema, updateUserSchema, monthlyQuerySchema } = require('../validation/schemas');
+const { updateUserSchema, monthlyQuerySchema } = require('../validation/schemas');
+const { requireOwnership } = require('../middleware/pinAuth');
 
 /**
- * GET /api/users - List all users
+ * GET /api/users - Get authenticated user's info only
  */
 router.get('/', (req, res) => {
   try {
-    const users = db.getAllUsers();
-    res.json(users);
+    const user = db.getUserById(req.auth.userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    const { pinHash, ...safeUser } = user;
+    res.json([safeUser]);
   } catch (error) {
     console.error('Error listing users:', error);
     res.status(500).json({ error: 'Failed to list users' });
@@ -26,7 +29,7 @@ router.get('/', (req, res) => {
 /**
  * GET /api/users/:userId - Get a specific user
  */
-router.get('/:userId', (req, res) => {
+router.get('/:userId', requireOwnership, (req, res) => {
   try {
     const user = db.getUserById(req.params.userId);
     if (!user) {
@@ -40,60 +43,9 @@ router.get('/:userId', (req, res) => {
 });
 
 /**
- * POST /api/users - Create a new user
- */
-router.post('/', validateBody(createUserSchema), async (req, res) => {
-  try {
-    const { name, pin } = req.body;
-    
-    // Check if user with this name already exists
-    const existing = db.getUserByName(name);
-    if (existing) {
-      return res.status(409).json({ error: 'A user with that name already exists' });
-    }
-    
-    const userId = uuidv4();
-    const now = new Date().toISOString();
-    
-    // Hash the PIN
-    const pinHash = await bcrypt.hash(pin, 12);
-    
-    const user = {
-      id: userId,
-      name,
-      pinHash,
-      createdAt: now,
-      updatedAt: now
-    };
-    
-    db.insertUser(user);
-    
-    // Create default categories for the new user
-    const defaultCategories = db.getDefaultCategories().map(cat => ({
-      id: uuidv4(),
-      userId: userId,
-      name: cat.name,
-      type: cat.type,
-      icon: cat.icon,
-      createdAt: now,
-      updatedAt: now
-    }));
-    
-    db.insertMany('categories', defaultCategories, userId);
-    
-    // Return user without pinHash
-    const { pinHash: _pinHash, ...safeUser } = user;
-    res.status(201).json(safeUser);
-  } catch (error) {
-    console.error('Error creating user:', error);
-    res.status(500).json({ error: 'Failed to create user' });
-  }
-});
-
-/**
  * PUT /api/users/:userId - Update a user
  */
-router.put('/:userId', validateBody(updateUserSchema), (req, res) => {
+router.put('/:userId', requireOwnership, validateBody(updateUserSchema), (req, res) => {
   try {
     const { name } = req.body;
     
@@ -113,7 +65,7 @@ router.put('/:userId', validateBody(updateUserSchema), (req, res) => {
 /**
  * DELETE /api/users/:userId - Delete a user and all their data
  */
-router.delete('/:userId', (req, res) => {
+router.delete('/:userId', requireOwnership, (req, res) => {
   try {
     const userId = req.params.userId;
     
@@ -138,7 +90,7 @@ router.delete('/:userId', (req, res) => {
  * Query params: month (0-11), year - optional, defaults to server's current date
  * Client should pass these to ensure correct timezone handling
  */
-router.get('/:userId/stats/summary', (req, res) => {
+router.get('/:userId/stats/summary', requireOwnership, (req, res) => {
   try {
     const userId = req.params.userId;
     const { month, year } = req.query;
@@ -224,7 +176,7 @@ router.get('/:userId/stats/summary', (req, res) => {
  * GET /api/users/:userId/stats/monthly - Get monthly breakdown
  * Query params: months, month (0-11), year - month/year specify client's current month
  */
-router.get('/:userId/stats/monthly', (req, res) => {
+router.get('/:userId/stats/monthly', requireOwnership, (req, res) => {
   try {
     const userId = req.params.userId;
     const { months = 6, month, year } = req.query;
@@ -300,7 +252,7 @@ router.get('/:userId/stats/monthly', (req, res) => {
  * GET /api/users/:userId/stats/comparison - Get month-on-month comparison
  * Query params: months, month (0-11), year - month/year specify client's current month
  */
-router.get('/:userId/stats/comparison', (req, res) => {
+router.get('/:userId/stats/comparison', requireOwnership, (req, res) => {
   try {
     const userId = req.params.userId;
     const { months = 12, month, year } = req.query;

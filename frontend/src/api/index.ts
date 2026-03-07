@@ -2,21 +2,43 @@ import type { User, Category, Transaction, RecurringTransaction, Summary, Monthl
 
 const API_BASE = '/api'
 
+// Module-level auth token
+let currentAuthToken: string | null = null
+
+export function setApiToken(token: string | null) {
+  currentAuthToken = token
+}
+
+export function getApiToken(): string | null {
+  return currentAuthToken
+}
+
 // Helper function for API calls
 async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  }
+
+  if (currentAuthToken && !endpoint.startsWith('/auth/')) {
+    headers['Authorization'] = `Bearer ${currentAuthToken}`
+  }
+
   const response = await fetch(`${API_BASE}${endpoint}`, {
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
     ...options,
+    headers: {
+      ...headers,
+      ...(options?.headers as Record<string, string>),
+    },
   })
-  
+
   if (!response.ok) {
+    if (response.status === 401 && !endpoint.startsWith('/auth/')) {
+      window.dispatchEvent(new CustomEvent('auth:unauthorized'))
+    }
     const error = await response.json().catch(() => ({ error: 'Unknown error' }))
     throw new Error(error.error || error.message || 'API request failed')
   }
-  
+
   return response.json()
 }
 
@@ -39,20 +61,20 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ token }),
     }),
+
+  register: (name: string, pin: string) =>
+    fetchApi<AuthLoginResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, pin }),
+    }),
 }
 
 // Users API
 export const usersApi = {
   getAll: () => fetchApi<User[]>('/users'),
-  
+
   getById: (userId: string) => fetchApi<User>(`/users/${userId}`),
-  
-  create: (name: string, pin: string) => 
-    fetchApi<User>('/users', {
-      method: 'POST',
-      body: JSON.stringify({ name, pin }),
-    }),
-  
+
   update: (userId: string, name: string) =>
     fetchApi<User>(`/users/${userId}`, {
       method: 'PUT',

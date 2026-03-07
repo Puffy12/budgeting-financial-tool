@@ -4,55 +4,12 @@
 
 const express = require('express');
 const router = express.Router();
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
 const { validateBody } = require('../middleware/validate');
-const { pinLoginSchema, setPinSchema, validateTokenSchema } = require('../validation/schemas');
-
-// Secret for HMAC token generation
-const PIN_AUTH_SECRET = process.env.PIN_AUTH_SECRET || crypto.randomBytes(32).toString('hex');
-
-/**
- * Generate a never-expiring token for a user
- * Format: userId:hmac where hmac = sha256(userId + secret)
- */
-function generatePinToken(userId) {
-  const hmac = crypto.createHmac('sha256', PIN_AUTH_SECRET)
-    .update(userId)
-    .digest('hex');
-  return `${userId}:${hmac}`;
-}
-
-/**
- * Validate a pin token and return the userId if valid
- */
-function validatePinToken(token) {
-  if (!token || typeof token !== 'string') return null;
-  
-  const parts = token.split(':');
-  if (parts.length !== 2) return null;
-  
-  // The userId could contain colons in theory, but UUIDs don't
-  // Split on last colon to get userId and hmac
-  const lastColonIndex = token.lastIndexOf(':');
-  const userId = token.substring(0, lastColonIndex);
-  const providedHmac = token.substring(lastColonIndex + 1);
-  
-  const expectedHmac = crypto.createHmac('sha256', PIN_AUTH_SECRET)
-    .update(userId)
-    .digest('hex');
-  
-  // Constant-time comparison to prevent timing attacks
-  if (providedHmac.length !== expectedHmac.length) return null;
-  
-  const isValid = crypto.timingSafeEqual(
-    Buffer.from(providedHmac, 'hex'),
-    Buffer.from(expectedHmac, 'hex')
-  );
-  
-  return isValid ? userId : null;
-}
+const { pinLoginSchema, setPinSchema, validateTokenSchema, createUserSchema } = require('../validation/schemas');
+const { generatePinToken, validatePinToken } = require('../auth/pinToken');
 
 /**
  * Strip pinHash from user object before sending to client
@@ -170,6 +127,62 @@ router.post('/validate-token', validateBody(validateTokenSchema), (req, res) => 
   } catch (error) {
     console.error('Error validating token:', error);
     res.status(500).json({ error: 'Token validation failed' });
+  }
+});
+
+/**
+ * POST /api/auth/register
+ * Create a new user with username and PIN, return token
+ */
+router.post('/register', validateBody(createUserSchema), async (req, res) => {
+  try {
+    const { name, pin } = req.body;
+
+    // Check if user with this name already exists
+    const existing = db.getUserByName(name);
+    if (existing) {
+      return res.status(409).json({ error: 'A user with that name already exists' });
+    }
+
+    const userId = uuidv4();
+    const now = new Date().toISOString();
+
+    // Hash the PIN
+    const pinHash = await bcrypt.hash(pin, 12);
+
+    const user = {
+      id: userId,
+      name,
+      pinHash,
+      createdAt: now,
+      updatedAt: now
+    };
+
+    db.insertUser(user);
+
+    // Create default categories for the new user
+    const defaultCategories = db.getDefaultCategories().map(cat => ({
+      id: uuidv4(),
+      userId: userId,
+      name: cat.name,
+      type: cat.type,
+      icon: cat.icon,
+      createdAt: now,
+      updatedAt: now
+    }));
+
+    db.insertMany('categories', defaultCategories, userId);
+
+    // Generate token
+    const token = generatePinToken(userId);
+
+    return res.status(201).json({
+      token,
+      user: sanitizeUser(user)
+    });
+  } catch (error) {
+    console.error('Error during registration:', error);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 

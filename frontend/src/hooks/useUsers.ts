@@ -4,7 +4,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { usersApi } from '../api'
+import { usersApi, authApi } from '../api'
 import { queryKeys } from '../lib/queryClient'
 import { toast } from 'sonner'
 
@@ -70,7 +70,7 @@ export function useCreateUser() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ name, pin }: { name: string; pin: string }) => usersApi.create(name, pin),
+    mutationFn: ({ name, pin }: { name: string; pin: string }) => authApi.register(name, pin),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.users })
       toast.success('User created successfully')
