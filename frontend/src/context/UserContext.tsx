@@ -248,6 +248,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const switchUser = useCallback((userId: string) => {
     const found = authenticatedUsers.find(au => au.user.id === userId)
     if (found) {
+      setApiToken(found.token)
       setCurrentUser(found.user)
     }
   }, [authenticatedUsers])
