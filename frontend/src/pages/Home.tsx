@@ -118,7 +118,7 @@ function PinInput({
 }
 
 export default function Home() {
-  const { authenticatedUsers, loading, login, signup, setPin, switchUser } = useUser()
+  const { authenticatedUsers, knownUsers, loading, login, signup, setPin, switchUser, removeKnownUser } = useUser()
   const { resolvedTheme, toggleTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const navigate = useNavigate()
@@ -140,19 +140,20 @@ export default function Home() {
 
   const usernameRef = useRef<HTMLInputElement>(null)
 
-  // Redirect if already logged in with a current user
+  // Auto-redirect if still authenticated from a previous session
   useEffect(() => {
     if (!loading && authenticatedUsers.length > 0) {
       const lastUserId = localStorage.getItem('currentUserId')
       if (lastUserId) {
         const found = authenticatedUsers.find(au => au.user.id === lastUserId)
         if (found) {
-          // Auto-navigate to last user
-          // Don't auto-navigate, let user choose from quick switch
+          // User still has a valid token — go straight to their dashboard
+          switchUser(lastUserId)
+          navigate(`/app/${lastUserId}`)
         }
       }
     }
-  }, [loading, authenticatedUsers])
+  }, [loading, authenticatedUsers, switchUser, navigate])
 
   const handleLogin = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
@@ -221,9 +222,19 @@ export default function Home() {
     }
   }, [setPinState, setPinValue, confirmSetPin, setPin, navigate])
 
-  const handleQuickSwitch = (userId: string) => {
-    switchUser(userId)
-    navigate(`/app/${userId}`)
+  const handleQuickSwitch = (userId: string, name: string) => {
+    // If user has a valid token, switch directly
+    const authed = authenticatedUsers.find(au => au.user.id === userId)
+    if (authed) {
+      switchUser(userId)
+      navigate(`/app/${userId}`)
+    } else {
+      // Pre-fill username and switch to login tab so they just need to enter PIN
+      setTab('login')
+      setUsername(name)
+      setPin_('')
+      setErrorMsg('')
+    }
   }
 
   const resetForm = () => {
@@ -297,9 +308,9 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Quick Switch - Previously logged in users */}
+        {/* Quick Sign In - Previously used accounts */}
         <AnimatePresence>
-          {authenticatedUsers.length > 0 && flow === 'main' && (
+          {knownUsers.length > 0 && flow === 'main' && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -309,32 +320,48 @@ export default function Home() {
               }`}
             >
               <p className={`mb-3 text-xs font-semibold uppercase tracking-widest ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`}>
-                Quick Switch
+                Quick Sign In
               </p>
               <div className="space-y-2">
-                {authenticatedUsers.map((au) => (
-                  <motion.button
-                    key={au.user.id}
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => handleQuickSwitch(au.user.id)}
-                    className={`flex w-full items-center gap-3 rounded-xl border p-3 transition-all ${
-                      isDark
-                        ? 'border-[#1a1a1e] bg-[#1a1a1e]/50 hover:border-primary-500/30 hover:bg-[#1a1a1e]'
-                        : 'border-[#ede9d5] bg-white hover:border-primary-200 hover:bg-primary-50/50'
-                    }`}
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25">
-                      {au.user.name.charAt(0).toUpperCase()}
+                {knownUsers.map((ku) => {
+                  const isAuthed = authenticatedUsers.some(au => au.user.id === ku.id)
+                  return (
+                    <div key={ku.id} className="flex items-center gap-1">
+                      <motion.button
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleQuickSwitch(ku.id, ku.name)}
+                        className={`flex flex-1 items-center gap-3 rounded-xl border p-3 transition-all ${
+                          isDark
+                            ? 'border-[#1a1a1e] bg-[#1a1a1e]/50 hover:border-primary-500/30 hover:bg-[#1a1a1e]'
+                            : 'border-[#ede9d5] bg-white hover:border-primary-200 hover:bg-primary-50/50'
+                        }`}
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-500 text-sm font-bold text-white shadow-lg shadow-primary-500/25">
+                          {ku.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 text-left min-w-0">
+                          <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                            {ku.name}
+                          </p>
+                          <p className={`text-xs ${isAuthed ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-[#3d3d45]' : 'text-slate-400')}`}>
+                            {isAuthed ? 'Tap to enter' : 'Enter PIN to sign in'}
+                          </p>
+                        </div>
+                        <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`} strokeWidth={1.75} />
+                      </motion.button>
+                      <button
+                        onClick={(e) => { e.stopPropagation(); removeKnownUser(ku.id); }}
+                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
+                          isDark ? 'text-[#3d3d45] hover:bg-[#1a1a1e] hover:text-red-400' : 'text-slate-300 hover:bg-red-50 hover:text-red-500'
+                        }`}
+                        title="Remove from quick sign in"
+                      >
+                        <X className="h-3.5 w-3.5" strokeWidth={2} />
+                      </button>
                     </div>
-                    <div className="flex-1 text-left min-w-0">
-                      <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                        {au.user.name}
-                      </p>
-                    </div>
-                    <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`} strokeWidth={1.75} />
-                  </motion.button>
-                ))}
+                  )
+                })}
               </div>
             </motion.div>
           )}

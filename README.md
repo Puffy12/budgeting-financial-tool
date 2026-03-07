@@ -13,114 +13,201 @@ A minimalistic, modern financial budgeting application built with React, TypeScr
 - **Quick Add**: Quickly add transactions from anywhere in the app
 - **Export/Import**: Backup and restore your financial data
 - **Mobile Responsive**: Works great on desktop and mobile devices
+- **PIN Authentication**: Secure per-user access with 4-digit PINs and token-based API auth
 
 ## Tech Stack
 
-### Frontend
-- React 19 with TypeScript
-- Vite for build tooling
-- Tailwind CSS v4 for styling
-- Framer Motion for animations
-- Chart.js for data visualization
-- React Router for navigation
+**Frontend:** React 19, TypeScript, Vite, Tailwind CSS v4, Framer Motion, Chart.js, React Router
 
-### Backend
-- Express.js
-- JSON file-based storage (no database setup required)
-- UUID for unique identifiers
+**Backend:** Express.js, JSON file storage (no database required), HMAC token auth
 
 ## Getting Started
 
 ### Prerequisites
-- Node.js 18+ installed
+- Node.js 18+
 
 ### Installation
 
-1. Clone the repository:
 ```bash
 git clone https://github.com/your-username/budgeting-financial-tool.git
 cd budgeting-financial-tool
-```
-
-2. Install all dependencies:
-```bash
 npm run install:all
 ```
 
 ### Development
 
-Run both frontend and backend in development mode:
 ```bash
 npm run dev
 ```
 
-This will start:
-- Backend server at `http://localhost:3001`
-- Frontend dev server at `http://localhost:5173`
+- Backend: `http://localhost:3001`
+- Frontend: `http://localhost:5173`
 
-### Building for Production
+### Production Build
 
 ```bash
 npm run build
 ```
 
-### API Endpoints
+---
 
-#### Users
-- `GET /api/users` - List all users
-- `POST /api/users` - Create a new user
-- `GET /api/users/:userId` - Get user details
-- `PUT /api/users/:userId` - Update user
-- `DELETE /api/users/:userId` - Delete user and all data
+## API Reference
 
-#### Transactions
-- `GET /api/users/:userId/transactions` - List transactions
-- `POST /api/users/:userId/transactions` - Create transaction
-- `PUT /api/users/:userId/transactions/:id` - Update transaction
-- `DELETE /api/users/:userId/transactions/:id` - Delete transaction
+**Base URL:** `http://localhost:3001/api`
 
-#### Categories
-- `GET /api/users/:userId/categories` - List categories
-- `POST /api/users/:userId/categories` - Create category
-- `PUT /api/users/:userId/categories/:id` - Update category
-- `DELETE /api/users/:userId/categories/:id` - Delete category
+**Authentication:** All endpoints except `/api/auth/*` require a Bearer token:
 
-#### Recurring
-- `GET /api/users/:userId/recurring` - List recurring transactions
-- `POST /api/users/:userId/recurring` - Create recurring
-- `PUT /api/users/:userId/recurring/:id` - Update recurring
-- `DELETE /api/users/:userId/recurring/:id` - Delete recurring
-- `POST /api/users/:userId/recurring/:id/process` - Manually trigger
+```
+Authorization: Bearer <token>
+```
 
-#### Statistics
-- `GET /api/users/:userId/stats/summary` - Current month summary
-- `GET /api/users/:userId/stats/monthly?months=6` - Monthly breakdown
-- `GET /api/users/:userId/stats/comparison?months=12` - Month comparison
+### Quick Reference
 
-#### Export/Import
-- `GET /api/users/:userId/export` - Export all data
-- `GET /api/users/:userId/export/month/:year/:month` - Export month
-- `GET /api/users/:userId/export/year/:year` - Export year
-- `POST /api/users/:userId/import` - Import data
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/auth/register` | Register (name, pin) |
+| POST | `/auth/pin-login` | Login (name, pin) |
+| POST | `/auth/set-pin` | Set PIN (userId, pin) |
+| POST | `/auth/validate-token` | Validate token |
+| GET | `/users` | Current user |
+| GET/PUT/DELETE | `/users/:userId` | User CRUD |
+| GET/POST | `/users/:userId/categories` | Categories |
+| PUT/DELETE | `/users/:userId/categories/:id` | Category by ID |
+| GET/POST | `/users/:userId/transactions` | Transactions (query: month, year, type, limit, etc.) |
+| PUT/DELETE | `/users/:userId/transactions/:id` | Transaction by ID |
+| GET/POST | `/users/:userId/recurring` | Recurring transactions |
+| PUT/DELETE | `/users/:userId/recurring/:id` | Recurring by ID |
+| POST | `/users/:userId/recurring/:id/process` | Manually process recurring |
+| GET | `/users/:userId/stats/summary` | Monthly summary (?month=&year=) |
+| GET | `/users/:userId/stats/monthly` | Monthly breakdown (?months=) |
+| GET | `/users/:userId/stats/comparison` | Month comparison (?months=) |
+| GET | `/users/:userId/export` | Export all data |
+| POST | `/users/:userId/import` | Import (data, mode) |
+
+### Key Request/Response Examples
+
+**Register** → returns `{ token, user }`
+
+```json
+POST /api/auth/register
+{ "name": "mike", "pin": "1234" }
+```
+
+**Create transaction** → returns created transaction
+
+```json
+POST /api/users/:userId/transactions
+{ "amount": 50, "type": "expense", "categoryId": "uuid", "date": "2026-03-06", "notes": "Groceries" }
+```
+
+**List transactions** → returns `{ transactions, total, limit, offset }`
+
+```
+GET /api/users/:userId/transactions?type=expense&limit=10&month=2&year=2026
+```
+
+---
+
+## Example Usage
+
+A few examples to show the pattern. Replace `YOUR_USER_ID` and `YOUR_TOKEN` with values from login/register.
+
+### cURL
+
+```bash
+# Login
+curl -X POST http://localhost:3001/api/auth/pin-login \
+  -H "Content-Type: application/json" \
+  -d '{"name": "mike", "pin": "1234"}'
+
+# Authenticated request
+curl http://localhost:3001/api/users/YOUR_USER_ID/categories \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Create transaction
+curl -X POST http://localhost:3001/api/users/YOUR_USER_ID/transactions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -d '{"amount": 50, "type": "expense", "categoryId": "CATEGORY_UUID", "date": "2026-03-06"}'
+```
+
+### JavaScript (fetch)
+
+```javascript
+const BASE = "http://localhost:3001/api";
+
+// Login
+const { token, user } = await (await fetch(`${BASE}/auth/pin-login`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ name: "mike", pin: "1234" }),
+})).json();
+
+// Authenticated helper
+async function api(path, opts = {}) {
+  const res = await fetch(`${BASE}${path}`, {
+    ...opts,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...opts.headers },
+  });
+  if (!res.ok) throw new Error((await res.json()).error);
+  return res.json();
+}
+
+// Examples
+const categories = await api(`/users/${user.id}/categories`);
+await api(`/users/${user.id}/transactions`, {
+  method: "POST",
+  body: JSON.stringify({ amount: 50, type: "expense", categoryId: categories[0].id, date: "2026-03-06" }),
+});
+const summary = await api(`/users/${user.id}/stats/summary?month=2&year=2026`);
+```
+
+### Python
+
+```python
+import requests
+BASE = "http://localhost:3001/api"
+
+# Login
+r = requests.post(f"{BASE}/auth/pin-login", json={"name": "mike", "pin": "1234"})
+token, user_id = r.json()["token"], r.json()["user"]["id"]
+headers = {"Authorization": f"Bearer {token}"}
+
+# Examples
+categories = requests.get(f"{BASE}/users/{user_id}/categories", headers=headers).json()
+requests.post(f"{BASE}/users/{user_id}/transactions", headers=headers, json={
+    "amount": 50, "type": "expense", "categoryId": categories[0]["id"], "date": "2026-03-06"
+})
+summary = requests.get(f"{BASE}/users/{user_id}/stats/summary", headers=headers, params={"month": 2, "year": 2026}).json()
+```
+
+---
+
+## Error Responses
+
+```json
+{ "error": "Authentication required" }
+```
+
+| Status | Meaning |
+|--------|---------|
+| 400 | Validation error |
+| 401 | Missing/invalid token |
+| 403 | Access denied |
+| 404 | Not found |
+| 409 | Conflict (e.g. duplicate username) |
+| 429 | Rate limited |
+| 500 | Server error |
+
+---
 
 ## Project Structure
 
 ```
 budgeting-financial-tool/
-├── backend/
-│   ├── data/           # JSON database storage
-│   ├── routes/         # API route handlers
-│   ├── utils/          # Database and utilities
-│   └── server.js       # Express server
-├── frontend/
-│   ├── src/
-│   │   ├── api/        # API client functions
-│   │   ├── components/ # React components
-│   │   ├── context/    # React context providers
-│   │   ├── pages/      # Page components
-│   │   └── types/      # TypeScript types
-│   └── index.html
-└── package.json        # Root package with dev scripts
+├── backend/          # Express server, auth, routes, JSON storage
+├── frontend/         # React app (api/, components/, pages/, etc.)
+└── package.json      # Root scripts (dev, build)
 ```
 
 ## License

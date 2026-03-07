@@ -3,10 +3,17 @@ import type { User, AuthenticatedUser } from '../types'
 import { authApi, usersApi, setApiToken } from '../api'
 
 const AUTH_TOKENS_KEY = 'auth_tokens'
+const KNOWN_USERS_KEY = 'known_users'
+
+export interface KnownUser {
+  id: string
+  name: string
+}
 
 interface UserContextType {
   currentUser: User | null
   authenticatedUsers: AuthenticatedUser[]
+  knownUsers: KnownUser[]
   loading: boolean
   error: string | null
   setCurrentUser: (user: User | null) => void
@@ -16,6 +23,7 @@ interface UserContextType {
   logout: (userId?: string) => void
   switchUser: (userId: string) => void
   deleteUser: (userId: string) => Promise<void>
+  removeKnownUser: (userId: string) => void
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined)
@@ -39,9 +47,36 @@ function saveTokens(tokens: Record<string, string>) {
   localStorage.setItem(AUTH_TOKENS_KEY, JSON.stringify(tokens))
 }
 
+function getKnownUsers(): KnownUser[] {
+  try {
+    const raw = localStorage.getItem(KNOWN_USERS_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+function saveKnownUsers(users: KnownUser[]) {
+  localStorage.setItem(KNOWN_USERS_KEY, JSON.stringify(users))
+}
+
+function addKnownUser(user: { id: string; name: string }) {
+  const known = getKnownUsers()
+  if (!known.some(u => u.id === user.id)) {
+    known.push({ id: user.id, name: user.name })
+  } else {
+    // Update name if changed
+    const idx = known.findIndex(u => u.id === user.id)
+    known[idx].name = user.name
+  }
+  saveKnownUsers(known)
+  return known
+}
+
 export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null)
   const [authenticatedUsers, setAuthenticatedUsers] = useState<AuthenticatedUser[]>([])
+  const [knownUsers, setKnownUsers] = useState<KnownUser[]>(() => getKnownUsers())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -155,6 +190,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
       // Set API token immediately
       setApiToken(token)
 
+      // Add to known users and authenticated users
+      setKnownUsers(addKnownUser(user))
+
       // Add to authenticated users (replace if exists)
       setAuthenticatedUsers(prev => {
         const filtered = prev.filter(au => au.user.id !== user.id)
@@ -186,6 +224,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Set API token immediately
     setApiToken(token)
 
+    // Add to known users and authenticated users
+    setKnownUsers(addKnownUser(user))
+
     // Add to authenticated users
     setAuthenticatedUsers(prev => {
       const filtered = prev.filter(au => au.user.id !== user.id)
@@ -210,7 +251,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     tokens[user.id] = token
     saveTokens(tokens)
 
-    // Add to authenticated users
+    // Add to known users and authenticated users
+    setKnownUsers(addKnownUser(user))
+
     setAuthenticatedUsers(prev => {
       const filtered = prev.filter(au => au.user.id !== user.id)
       return [...filtered, { user, token }]
@@ -254,18 +297,29 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [authenticatedUsers])
 
   /**
+   * Remove a user from the quick sign-in list
+   */
+  const removeKnownUser = useCallback((userId: string) => {
+    const updated = getKnownUsers().filter(u => u.id !== userId)
+    saveKnownUsers(updated)
+    setKnownUsers(updated)
+  }, [])
+
+  /**
    * Delete a user account
    */
   const deleteUser = useCallback(async (userId: string) => {
     await usersApi.delete(userId)
+    removeKnownUser(userId)
     logout(userId)
-  }, [logout])
+  }, [logout, removeKnownUser])
 
   return (
     <UserContext.Provider
       value={{
         currentUser,
         authenticatedUsers,
+        knownUsers,
         loading,
         error,
         setCurrentUser,
@@ -275,6 +329,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         logout,
         switchUser,
         deleteUser,
+        removeKnownUser,
       }}
     >
       {children}
