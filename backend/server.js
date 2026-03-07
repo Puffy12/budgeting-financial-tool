@@ -275,6 +275,7 @@ app.get('/logout', (req, res) => {
   res.redirect('/password.html');
 });
 
+
 // Password protection middleware
 app.use((req, res, next) => {
   // Skip auth for certain paths

@@ -222,19 +222,38 @@ export default function Home() {
     }
   }, [setPinState, setPinValue, confirmSetPin, setPin, navigate])
 
-  const handleQuickSwitch = (userId: string, name: string) => {
+  const handleQuickSwitch = async (userId: string, name: string) => {
     // If user has a valid token, switch directly
     const authed = authenticatedUsers.find(au => au.user.id === userId)
     if (authed) {
       switchUser(userId)
       navigate(`/app/${userId}`)
-    } else {
-      // Pre-fill username and switch to login tab so they just need to enter PIN
-      setTab('login')
-      setUsername(name)
-      setPin_('')
-      setErrorMsg('')
+      return
     }
+
+    // If we have a stored PIN, auto-login without prompting
+    const ku = knownUsers.find(u => u.id === userId)
+    if (ku?.pin) {
+      setErrorMsg('')
+      setSubmitting(true)
+      try {
+        const result = await login(ku.name, ku.pin)
+        if (result.user) {
+          navigate(`/app/${result.user.id}`)
+          return
+        }
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : 'Login failed')
+      } finally {
+        setSubmitting(false)
+      }
+    }
+
+    // Fallback: pre-fill username and switch to login tab
+    setTab('login')
+    setUsername(name)
+    setPin_('')
+    setErrorMsg('')
   }
 
   const resetForm = () => {
@@ -344,8 +363,8 @@ export default function Home() {
                           <p className={`text-sm font-medium truncate ${isDark ? 'text-white' : 'text-slate-900'}`}>
                             {ku.name}
                           </p>
-                          <p className={`text-xs ${isAuthed ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-[#3d3d45]' : 'text-slate-400')}`}>
-                            {isAuthed ? 'Tap to enter' : 'Enter PIN to sign in'}
+                          <p className={`text-xs ${isAuthed || ku.pin ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-[#3d3d45]' : 'text-slate-400')}`}>
+                            {isAuthed || ku.pin ? 'Tap to sign in' : 'Enter PIN to sign in'}
                           </p>
                         </div>
                         <ChevronRight className={`h-4 w-4 ${isDark ? 'text-[#3d3d45]' : 'text-slate-400'}`} strokeWidth={1.75} />

@@ -8,6 +8,7 @@ const KNOWN_USERS_KEY = 'known_users'
 export interface KnownUser {
   id: string
   name: string
+  pin?: string
 }
 
 interface UserContextType {
@@ -60,14 +61,14 @@ function saveKnownUsers(users: KnownUser[]) {
   localStorage.setItem(KNOWN_USERS_KEY, JSON.stringify(users))
 }
 
-function addKnownUser(user: { id: string; name: string }) {
+function addKnownUser(user: { id: string; name: string; pin?: string }) {
   const known = getKnownUsers()
-  if (!known.some(u => u.id === user.id)) {
-    known.push({ id: user.id, name: user.name })
+  const idx = known.findIndex(u => u.id === user.id)
+  if (idx === -1) {
+    known.push({ id: user.id, name: user.name, pin: user.pin })
   } else {
-    // Update name if changed
-    const idx = known.findIndex(u => u.id === user.id)
     known[idx].name = user.name
+    if (user.pin) known[idx].pin = user.pin
   }
   saveKnownUsers(known)
   return known
@@ -81,23 +82,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   // On mount, validate all stored tokens and restore authenticated users
+  // If a token is expired but we have a stored PIN, auto-re-login
   useEffect(() => {
     let cancelled = false
 
     async function validateStoredTokens() {
       const tokens = getStoredTokens()
+      const known = getKnownUsers()
       const entries = Object.entries(tokens)
 
-      if (entries.length === 0) {
+      if (entries.length === 0 && known.every(k => !k.pin)) {
         setLoading(false)
         return
       }
 
       const validUsers: AuthenticatedUser[] = []
       const validTokens: Record<string, string> = {}
+      const triedUserIds = new Set<string>()
 
+      // First pass: validate existing tokens
       await Promise.all(
         entries.map(async ([userId, token]) => {
+          triedUserIds.add(userId)
           try {
             const result = await authApi.validateToken(token)
             if (result.valid && result.user) {
@@ -105,7 +111,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
               validTokens[userId] = token
             }
           } catch {
-            // Token invalid, skip
+            // Token invalid, skip — will try re-login below
+          }
+        })
+      )
+
+      if (cancelled) return
+
+      // Second pass: for known users with stored PINs whose tokens are missing/expired, auto-re-login
+      const usersNeedingRelogin = known.filter(
+        k => k.pin && !validTokens[k.id]
+      )
+      await Promise.all(
+        usersNeedingRelogin.map(async (ku) => {
+          try {
+            const result = await authApi.login(ku.name, ku.pin!)
+            if ('token' in result && 'user' in result) {
+              validUsers.push({ user: result.user, token: result.token })
+              validTokens[result.user.id] = result.token
+            }
+          } catch {
+            // Re-login failed, skip
           }
         })
       )
@@ -190,8 +216,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       // Set API token immediately
       setApiToken(token)
 
-      // Add to known users and authenticated users
-      setKnownUsers(addKnownUser(user))
+      // Add to known users (with PIN for auto-re-login) and authenticated users
+      setKnownUsers(addKnownUser({ ...user, pin }))
 
       // Add to authenticated users (replace if exists)
       setAuthenticatedUsers(prev => {
@@ -224,8 +250,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     // Set API token immediately
     setApiToken(token)
 
-    // Add to known users and authenticated users
-    setKnownUsers(addKnownUser(user))
+    // Add to known users (with PIN for auto-re-login) and authenticated users
+    setKnownUsers(addKnownUser({ ...user, pin }))
 
     // Add to authenticated users
     setAuthenticatedUsers(prev => {
@@ -251,8 +277,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     tokens[user.id] = token
     saveTokens(tokens)
 
-    // Add to known users and authenticated users
-    setKnownUsers(addKnownUser(user))
+    // Add to known users (with PIN for auto-re-login) and authenticated users
+    setKnownUsers(addKnownUser({ ...user, pin }))
 
     setAuthenticatedUsers(prev => {
       const filtered = prev.filter(au => au.user.id !== user.id)
@@ -266,22 +292,16 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   /**
    * Logout a user (or current user if no userId specified)
+   * Keeps the token stored for quick re-entry — use removeKnownUser to fully remove
    */
   const logout = useCallback((userId?: string) => {
     const targetId = userId || currentUser?.id
     if (!targetId) return
 
-    // Remove token
-    const tokens = getStoredTokens()
-    delete tokens[targetId]
-    saveTokens(tokens)
-
-    // Remove from authenticated users
-    setAuthenticatedUsers(prev => prev.filter(au => au.user.id !== targetId))
-
     // If logging out current user, clear them
     if (currentUser?.id === targetId) {
       setCurrentUser(null)
+      setApiToken(null)
     }
   }, [currentUser])
 
@@ -297,13 +317,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [authenticatedUsers])
 
   /**
-   * Remove a user from the quick sign-in list
+   * Remove a user from the quick sign-in list and delete their token
    */
   const removeKnownUser = useCallback((userId: string) => {
+    // Remove token
+    const tokens = getStoredTokens()
+    delete tokens[userId]
+    saveTokens(tokens)
+
+    // Remove from authenticated users
+    setAuthenticatedUsers(prev => prev.filter(au => au.user.id !== userId))
+
+    // Remove from known users
     const updated = getKnownUsers().filter(u => u.id !== userId)
     saveKnownUsers(updated)
     setKnownUsers(updated)
-  }, [])
+
+    // If removing current user, clear them
+    if (currentUser?.id === userId) {
+      setCurrentUser(null)
+      setApiToken(null)
+    }
+  }, [currentUser])
 
   /**
    * Delete a user account
@@ -311,8 +346,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const deleteUser = useCallback(async (userId: string) => {
     await usersApi.delete(userId)
     removeKnownUser(userId)
-    logout(userId)
-  }, [logout, removeKnownUser])
+  }, [removeKnownUser])
 
   return (
     <UserContext.Provider
