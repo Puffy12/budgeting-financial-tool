@@ -1,10 +1,18 @@
 const { validatePinToken } = require('../auth/pinToken');
 
+const isDevMode = process.env.DEV_MODE === 'true' && process.env.NODE_ENV !== 'production';
+
 /**
  * Middleware: Require a valid Bearer token in the Authorization header.
  * Attaches req.auth = { userId } on success.
+ * In DEV_MODE, bypasses token validation and uses the :userId URL param.
  */
 function requireAuth(req, res, next) {
+  if (isDevMode) {
+    req.auth = { userId: req.params.userId || 'dev-user' };
+    return next();
+  }
+
   const authHeader = req.headers['authorization'];
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Authentication required' });
