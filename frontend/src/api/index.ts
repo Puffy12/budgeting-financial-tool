@@ -84,6 +84,7 @@ export const usersApi = {
   delete: (userId: string) =>
     fetchApi<{ message: string }>(`/users/${userId}`, {
       method: 'DELETE',
+      headers: { 'X-Confirm-Delete': 'true' },
     }),
   
   getSummary: (userId: string, params?: { month?: number; year?: number }) => {

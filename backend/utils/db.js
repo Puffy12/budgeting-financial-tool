@@ -103,10 +103,13 @@ function readJsonFile(filePath) {
 }
 
 /**
- * Write JSON file safely
+ * Write JSON file atomically (write to temp file, then rename)
+ * Prevents data corruption if the process crashes mid-write.
  */
 function writeJsonFile(filePath, data) {
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+  const tmpPath = filePath + '.tmp';
+  fs.writeFileSync(tmpPath, JSON.stringify(data, null, 2));
+  fs.renameSync(tmpPath, filePath);
 }
 
 // ============ Users Collection ============

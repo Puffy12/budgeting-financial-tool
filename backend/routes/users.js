@@ -68,13 +68,18 @@ router.put('/:userId', requireOwnership, validateBody(updateUserSchema), (req, r
 router.delete('/:userId', requireOwnership, (req, res) => {
   try {
     const userId = req.params.userId;
-    
+
+    // Require explicit confirmation to prevent accidental data loss
+    if (req.get('X-Confirm-Delete') !== 'true') {
+      return res.status(400).json({ error: 'Missing X-Confirm-Delete header. This action permanently deletes all user data.' });
+    }
+
     // Check if user exists
     const user = db.getUserById(userId);
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    
+
     // Delete user (this also deletes their data folder)
     db.deleteUser(userId);
     

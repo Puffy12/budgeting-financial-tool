@@ -7,12 +7,10 @@
 // Load environment variables
 const path = require('path');
 const fs = require('fs');
-const crypto = require('crypto');
 require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 const express = require('express');
 const cors = require('cors');
-const cookieParser = require('cookie-parser');
 const helmet = require('helmet');
 
 // Import routes
@@ -30,8 +28,7 @@ const { processRecurringTransactions } = require('./utils/recurringProcessor');
 // Import middleware
 const { apiLimiter, authLimiter, writeLimiter } = require('./middleware/rateLimiter');
 
-// Import JWT auth
-const { generateTokens, refreshAccessToken, revokeRefreshToken, ACCESS_TOKEN_EXPIRY } = require('./auth/jwt');
+// PIN auth is imported below with route mounting
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,46 +43,26 @@ const isProduction = process.env.NODE_ENV === 'production';
 // Development mode - disables authentication for local testing
 const DEV_MODE = process.env.DEV_MODE === 'true' && !isProduction;
 
-// Password protection settings - DISABLED
-const DASHBOARD_PASSWORD = null //process.env.DEV_DASHBOARD_PASSWORD;
-const AUTH_COOKIE_NAME = 'budget_app_auth';
-const AUTH_COOKIE_MAX_AGE = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
-
-/**
- * Generate a simple token for authentication
- */
-function generateAuthToken(password) {
-  const timestamp = Date.now();
-  const hash = crypto.createHash('sha256').update(`${password}-${timestamp}`).digest('hex');
-  return `${timestamp}-${hash.substring(0, 16)}`;
-}
-
-/**
- * Verify auth token is valid and not expired
- */
-function isValidAuthToken(token) {
-  if (!token) return false;
-  const parts = token.split('-');
-  if (parts.length !== 2) return false;
-  
-  const timestamp = parseInt(parts[0], 10);
-  if (isNaN(timestamp)) return false;
-  
-  // Check if token is within the 30-day window
-  const now = Date.now();
-  const age = now - timestamp;
-  return age >= 0 && age < AUTH_COOKIE_MAX_AGE;
-}
-
 // Security headers (helmet)
 app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for SPA compatibility
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+      fontSrc: ["'self'", "https://fonts.gstatic.com"],
+      imgSrc: ["'self'", "data:", "blob:"],
+      connectSrc: ["'self'"],
+    },
+  },
   crossOriginEmbedderPolicy: false
 }));
 
 // Middleware
-app.use(cors());
-app.use(cookieParser());
+const allowedOrigins = isProduction
+  ? [process.env.CORS_ORIGIN || `http://localhost:${PORT}`]
+  : ['http://localhost:5173', `http://localhost:${PORT}`];
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -116,201 +93,8 @@ processRecurringTransactions();
 // Process recurring transactions every hour
 setInterval(processRecurringTransactions, 60 * 60 * 1000);
 
-// ============ Password Protection ============
-
-// Apply auth limiter to password endpoints
-app.use('/check-password', authLimiter);
+// Apply auth limiter to auth endpoints
 app.use('/api/auth', authLimiter);
-
-// Password check endpoint - must be before auth middleware
-app.post('/check-password', (req, res) => {
-  const { password } = req.body;
-  
-  if (!DASHBOARD_PASSWORD) {
-    // No password set, allow access
-    return res.redirect('/');
-  }
-  
-  if (password === DASHBOARD_PASSWORD) {
-    // Set auth cookie for 30 days
-    const token = generateAuthToken(password);
-    res.cookie(AUTH_COOKIE_NAME, token, {
-      maxAge: AUTH_COOKIE_MAX_AGE,
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: isProduction
-    });
-    return res.redirect('/');
-  }
-  
-  // Wrong password
-  return res.redirect('/password.html?error=1');
-});
-
-// ============ JWT Authentication Endpoints ============
-
-// Login endpoint - returns JWT tokens
-app.post('/api/auth/login', (req, res) => {
-  const { password } = req.body;
-  
-  if (!DASHBOARD_PASSWORD) {
-    // No password set, generate tokens anyway
-    const tokens = generateTokens('default-user');
-    res.cookie('access_token', tokens.accessToken, {
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: isProduction
-    });
-    res.cookie('refresh_token', tokens.refreshToken, {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: isProduction
-    });
-    return res.json({
-      message: 'Login successful',
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: ACCESS_TOKEN_EXPIRY
-    });
-  }
-  
-  if (password === DASHBOARD_PASSWORD) {
-    const tokens = generateTokens('authenticated-user');
-    
-    // Set HTTP-only cookies
-    res.cookie('access_token', tokens.accessToken, {
-      maxAge: 15 * 60 * 1000, // 15 minutes
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: isProduction
-    });
-    res.cookie('refresh_token', tokens.refreshToken, {
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: isProduction
-    });
-    
-    return res.json({
-      message: 'Login successful',
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      expiresIn: ACCESS_TOKEN_EXPIRY
-    });
-  }
-  
-  return res.status(401).json({
-    error: 'Unauthorized',
-    message: 'Invalid password'
-  });
-});
-
-// Refresh token endpoint
-app.post('/api/auth/refresh', (req, res) => {
-  const refreshToken = req.body.refreshToken || req.cookies?.refresh_token;
-  
-  if (!refreshToken) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Refresh token is required'
-    });
-  }
-  
-  const tokens = refreshAccessToken(refreshToken);
-  
-  if (!tokens) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Invalid or expired refresh token'
-    });
-  }
-  
-  // Set new cookies
-  res.cookie('access_token', tokens.accessToken, {
-    maxAge: 15 * 60 * 1000,
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: isProduction
-  });
-  res.cookie('refresh_token', tokens.refreshToken, {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    sameSite: 'strict',
-    secure: isProduction
-  });
-  
-  return res.json({
-    message: 'Token refreshed successfully',
-    accessToken: tokens.accessToken,
-    refreshToken: tokens.refreshToken,
-    expiresIn: ACCESS_TOKEN_EXPIRY
-  });
-});
-
-// Logout endpoint - revokes refresh token
-app.post('/api/auth/logout', (req, res) => {
-  const refreshToken = req.body.refreshToken || req.cookies?.refresh_token;
-  
-  if (refreshToken) {
-    revokeRefreshToken(refreshToken);
-  }
-  
-  res.clearCookie('access_token');
-  res.clearCookie('refresh_token');
-  res.clearCookie(AUTH_COOKIE_NAME);
-  
-  return res.json({ message: 'Logged out successfully' });
-});
-
-// Serve password page
-app.get('/password.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'password.html'));
-});
-
-// Logout endpoint
-app.get('/logout', (req, res) => {
-  res.clearCookie(AUTH_COOKIE_NAME);
-  res.redirect('/password.html');
-});
-
-
-// Password protection middleware
-app.use((req, res, next) => {
-  // Skip auth for certain paths
-  if (req.path === '/check-password' || 
-      req.path === '/password.html' || 
-      req.path === '/health' ||
-      req.path === '/logout' ||
-      req.path.startsWith('/api/auth/')) {
-    return next();
-  }
-  
-  // DEV_MODE bypasses all authentication
-  if (DEV_MODE) {
-    return next();
-  }
-  
-  // If no password is set, allow all access
-  if (!DASHBOARD_PASSWORD) {
-    return next();
-  }
-  
-  // Check for valid auth cookie
-  const authToken = req.cookies[AUTH_COOKIE_NAME];
-  if (isValidAuthToken(authToken)) {
-    return next();
-  }
-  
-  // Not authenticated - return 401 for API requests, redirect for others
-  if (req.path.startsWith('/api')) {
-    return res.status(401).json({ error: 'Unauthorized', message: 'Authentication required' });
-  }
-  
-  // Redirect to password page
-  return res.redirect('/password.html');
-});
 
 // ============ Health & API Info ============
 
@@ -485,9 +269,9 @@ app.use((err, req, res, next) => {
 // Start server
 app.listen(PORT, () => {
   const frontendStatus = hasFrontend ? 'Serving from /dist' : 'Not deployed';
-  const authStatus = DEV_MODE ? 'DISABLED (DEV_MODE)' : (DASHBOARD_PASSWORD ? 'Enabled (30-day session)' : 'Disabled');
   const modeStatus = isProduction ? 'Production' : 'Development';
-  
+  const authStatus = DEV_MODE ? 'DISABLED (DEV_MODE)' : 'PIN Auth (14-day tokens)';
+
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║              Budgeting App Server v1.0.0                      ║
@@ -497,7 +281,7 @@ app.listen(PORT, () => {
 ║  Health check:      http://localhost:${PORT}/health              ║
 ║  Mode:              ${modeStatus.padEnd(41)}║
 ║  Frontend:          ${frontendStatus.padEnd(41)}║
-║  Password Auth:     ${authStatus.padEnd(41)}║
+║  Auth:              ${authStatus.padEnd(41)}║
 ╚═══════════════════════════════════════════════════════════════╝
   `);
   
