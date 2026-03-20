@@ -206,6 +206,14 @@ const validateTokenSchema = z.object({
   token: z.string().min(1, 'Token is required')
 });
 
+const changePinSchema = z.object({
+  currentPin: pinSchema,
+  newPin: pinSchema
+}).refine(data => data.currentPin !== data.newPin, {
+  message: 'New PIN must be different from current PIN',
+  path: ['newPin']
+});
+
 module.exports = {
   // Common
   uuidSchema,
@@ -243,5 +251,6 @@ module.exports = {
   pinLoginSchema,
   setPinSchema,
   validateTokenSchema,
+  changePinSchema,
   pinSchema
 };

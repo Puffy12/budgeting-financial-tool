@@ -67,6 +67,13 @@ export const authApi = {
       method: 'POST',
       body: JSON.stringify({ name, pin }),
     }),
+
+  changePin: (currentPin: string, newPin: string) =>
+    fetchApi<AuthLoginResponse>('/auth/change-pin', {
+      method: 'PUT',
+      body: JSON.stringify({ currentPin, newPin }),
+      headers: currentAuthToken ? { 'Authorization': `Bearer ${currentAuthToken}` } : {},
+    }),
 }
 
 // Users API

@@ -23,6 +23,7 @@ interface UserContextType {
   setPin: (userId: string, pin: string) => Promise<User>
   logout: (userId?: string) => void
   switchUser: (userId: string) => void
+  changePin: (currentPin: string, newPin: string) => Promise<User>
   deleteUser: (userId: string) => Promise<void>
   removeKnownUser: (userId: string) => void
 }
@@ -192,6 +193,28 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [currentUser])
 
   /**
+   * Complete auth flow: store token, update known users, set current user
+   */
+  const completeAuth = useCallback((token: string, user: User, pin?: string) => {
+    const tokens = getStoredTokens()
+    tokens[user.id] = token
+    saveTokens(tokens)
+
+    setApiToken(token)
+
+    if (pin) {
+      setKnownUsers(addKnownUser({ ...user, pin }))
+    }
+
+    setAuthenticatedUsers(prev => {
+      const filtered = prev.filter(au => au.user.id !== user.id)
+      return [...filtered, { user, token }]
+    })
+
+    setCurrentUser(user)
+  }, [])
+
+  /**
    * Login with username and PIN
    * Returns { user } on success, or { needsPin, userId, name } if user needs to set PIN
    */
@@ -199,96 +222,47 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setError(null)
     const result = await authApi.login(name, pin)
 
-    // Check if user needs to set PIN
     if ('needsPin' in result && result.needsPin) {
       return { needsPin: true, userId: result.userId, name: result.name }
     }
 
-    // Successful login
     if ('token' in result && 'user' in result) {
-      const { token, user } = result
-
-      // Store token
-      const tokens = getStoredTokens()
-      tokens[user.id] = token
-      saveTokens(tokens)
-
-      // Set API token immediately
-      setApiToken(token)
-
-      // Add to known users (with PIN for auto-re-login) and authenticated users
-      setKnownUsers(addKnownUser({ ...user, pin }))
-
-      // Add to authenticated users (replace if exists)
-      setAuthenticatedUsers(prev => {
-        const filtered = prev.filter(au => au.user.id !== user.id)
-        return [...filtered, { user, token }]
-      })
-
-      // Set as current user
-      setCurrentUser(user)
-
-      return { user }
+      completeAuth(result.token, result.user, pin)
+      return { user: result.user }
     }
 
     throw new Error('Unexpected login response')
-  }, [])
+  }, [completeAuth])
 
   /**
    * Create a new user with username and PIN
    */
   const signup = useCallback(async (name: string, pin: string) => {
     setError(null)
-    const result = await authApi.register(name, pin)
-    const { token, user } = result
-
-    // Store token
-    const tokens = getStoredTokens()
-    tokens[user.id] = token
-    saveTokens(tokens)
-
-    // Set API token immediately
-    setApiToken(token)
-
-    // Add to known users (with PIN for auto-re-login) and authenticated users
-    setKnownUsers(addKnownUser({ ...user, pin }))
-
-    // Add to authenticated users
-    setAuthenticatedUsers(prev => {
-      const filtered = prev.filter(au => au.user.id !== user.id)
-      return [...filtered, { user, token }]
-    })
-
-    setCurrentUser(user)
-
+    const { token, user } = await authApi.register(name, pin)
+    completeAuth(token, user, pin)
     return user
-  }, [])
+  }, [completeAuth])
 
   /**
    * Set PIN for an existing user who doesn't have one
    */
   const setUserPin = useCallback(async (userId: string, pin: string) => {
     setError(null)
-    const result = await authApi.setPin(userId, pin)
-    const { token, user } = result
-
-    // Store token
-    const tokens = getStoredTokens()
-    tokens[user.id] = token
-    saveTokens(tokens)
-
-    // Add to known users (with PIN for auto-re-login) and authenticated users
-    setKnownUsers(addKnownUser({ ...user, pin }))
-
-    setAuthenticatedUsers(prev => {
-      const filtered = prev.filter(au => au.user.id !== user.id)
-      return [...filtered, { user, token }]
-    })
-
-    setCurrentUser(user)
-
+    const { token, user } = await authApi.setPin(userId, pin)
+    completeAuth(token, user, pin)
     return user
-  }, [])
+  }, [completeAuth])
+
+  /**
+   * Change PIN for the current authenticated user
+   */
+  const changeUserPin = useCallback(async (currentPin: string, newPin: string) => {
+    setError(null)
+    const { token, user } = await authApi.changePin(currentPin, newPin)
+    completeAuth(token, user, newPin)
+    return user
+  }, [completeAuth])
 
   /**
    * Logout a user (or current user if no userId specified)
@@ -360,6 +334,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         login,
         signup,
         setPin: setUserPin,
+        changePin: changeUserPin,
         logout,
         switchUser,
         deleteUser,

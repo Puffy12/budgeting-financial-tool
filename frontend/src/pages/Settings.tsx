@@ -13,10 +13,12 @@ import {
   UserCog,
   Trash2,
   X,
+  Shield,
+  KeyRound,
 } from 'lucide-react'
 
 export default function Settings() {
-  const { currentUser, setCurrentUser, deleteUser } = useUser()
+  const { currentUser, setCurrentUser, deleteUser, changePin } = useUser()
   const { theme, setTheme, resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const navigate = useNavigate()
@@ -27,6 +29,12 @@ export default function Settings() {
   const [importing, setImporting] = useState(false)
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge')
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
+  const [changingPin, setChangingPin] = useState(false)
+  const [currentPinValue, setCurrentPinValue] = useState('')
+  const [newPinValue, setNewPinValue] = useState('')
+  const [confirmPinValue, setConfirmPinValue] = useState('')
+  const [pinError, setPinError] = useState<{ field: 'currentPin' | 'newPin' | 'confirmPin'; message: string } | null>(null)
+  const [savingPin, setSavingPin] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleUpdateName = async () => {
@@ -41,6 +49,51 @@ export default function Settings() {
       setMessage({ type: 'error', text: 'Failed to update name' })
     } finally {
       setSaving(false)
+    }
+  }
+
+  const resetPinForm = () => {
+    setChangingPin(false)
+    setCurrentPinValue('')
+    setNewPinValue('')
+    setConfirmPinValue('')
+    setPinError(null)
+  }
+
+  const handleChangePin = async () => {
+    setPinError(null)
+
+    if (!/^\d{4}$/.test(currentPinValue)) {
+      setPinError({ field: 'currentPin', message: 'PIN must be exactly 4 digits' })
+      return
+    }
+    if (!/^\d{4}$/.test(newPinValue)) {
+      setPinError({ field: 'newPin', message: 'PIN must be exactly 4 digits' })
+      return
+    }
+    if (currentPinValue === newPinValue) {
+      setPinError({ field: 'newPin', message: 'New PIN must be different from current PIN' })
+      return
+    }
+    if (newPinValue !== confirmPinValue) {
+      setPinError({ field: 'confirmPin', message: 'PINs do not match' })
+      return
+    }
+
+    setSavingPin(true)
+    try {
+      await changePin(currentPinValue, newPinValue)
+      resetPinForm()
+      setMessage({ type: 'success', text: 'PIN changed successfully!' })
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to change PIN'
+      if (errorMsg.toLowerCase().includes('current pin') || errorMsg.toLowerCase().includes('incorrect')) {
+        setPinError({ field: 'currentPin', message: errorMsg })
+      } else {
+        setPinError({ field: 'newPin', message: errorMsg })
+      }
+    } finally {
+      setSavingPin(false)
     }
   }
 
@@ -197,8 +250,72 @@ export default function Settings() {
           </div>
         </motion.div>
 
-        {/* Theme Section */}
+        {/* Security Section */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05, duration: 0.3 }}
+          className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
+          <div className="mb-5 flex items-center gap-3">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
+              <Shield className={`h-5 w-5 ${isDark ? 'text-[#52525e]' : 'text-slate-500'}`} strokeWidth={1.75} />
+            </div>
+            <h2 className={`text-lg font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Security</h2>
+          </div>
+          {changingPin ? (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="current-pin" className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Current PIN</label>
+                <input id="current-pin" type="password" inputMode="numeric" maxLength={4} pattern="\d{4}" value={currentPinValue}
+                  onChange={(e) => { setCurrentPinValue(e.target.value.replace(/\D/g, '')); setPinError(null) }}
+                  aria-describedby={pinError?.field === 'currentPin' ? 'current-pin-error' : undefined}
+                  className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'} ${pinError?.field === 'currentPin' ? isDark ? 'border-red-500/50' : 'border-red-300' : ''}`}
+                  placeholder="Enter current PIN" />
+                {pinError?.field === 'currentPin' && (
+                  <p id="current-pin-error" role="alert" className={`mt-1.5 text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{pinError.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="new-pin" className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>New PIN</label>
+                <input id="new-pin" type="password" inputMode="numeric" maxLength={4} pattern="\d{4}" value={newPinValue}
+                  onChange={(e) => { setNewPinValue(e.target.value.replace(/\D/g, '')); setPinError(null) }}
+                  aria-describedby={pinError?.field === 'newPin' ? 'new-pin-error' : undefined}
+                  className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'} ${pinError?.field === 'newPin' ? isDark ? 'border-red-500/50' : 'border-red-300' : ''}`}
+                  placeholder="Enter new 4-digit PIN" />
+                {pinError?.field === 'newPin' && (
+                  <p id="new-pin-error" role="alert" className={`mt-1.5 text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{pinError.message}</p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="confirm-pin" className={`mb-2 block text-sm font-medium ${isDark ? 'text-[#52525e]' : 'text-slate-600'}`}>Confirm New PIN</label>
+                <input id="confirm-pin" type="password" inputMode="numeric" maxLength={4} pattern="\d{4}" value={confirmPinValue}
+                  onChange={(e) => { setConfirmPinValue(e.target.value.replace(/\D/g, '')); setPinError(null) }}
+                  aria-describedby={pinError?.field === 'confirmPin' ? 'confirm-pin-error' : undefined}
+                  className={`w-full rounded-xl border px-4 py-3 transition-all duration-200 ${isDark ? 'border-[#242428] bg-[#1a1a1e] text-white focus:border-primary-500' : 'border-[#ede9d5] bg-[#faf9f6] text-slate-900 focus:border-primary-500'} ${pinError?.field === 'confirmPin' ? isDark ? 'border-red-500/50' : 'border-red-300' : ''}`}
+                  placeholder="Re-enter new PIN" />
+                {pinError?.field === 'confirmPin' && (
+                  <p id="confirm-pin-error" role="alert" className={`mt-1.5 text-sm ${isDark ? 'text-red-400' : 'text-red-600'}`}>{pinError.message}</p>
+                )}
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={handleChangePin} disabled={savingPin}
+                  className="btn-premium rounded-xl bg-primary-500 px-4 py-3 font-medium text-white transition-all hover:bg-primary-600 active:scale-[0.98] disabled:opacity-50">
+                  {savingPin ? 'Saving...' : 'Update PIN'}
+                </button>
+                <button onClick={resetPinForm}
+                  className={`rounded-xl border px-4 py-3 font-medium transition-all active:scale-[0.98] ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e]' : 'border-[#ede9d5] text-slate-500 hover:bg-[#f5f5dc]'}`}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button onClick={() => setChangingPin(true)}
+              className={`inline-flex items-center gap-2 rounded-xl border px-4 py-3 font-medium transition-all duration-200 active:scale-[0.98] ${isDark ? 'border-[#242428] text-[#52525e] hover:bg-[#1a1a1e] hover:text-white' : 'border-[#ede9d5] text-slate-600 hover:bg-[#f5f5dc]'}`}>
+              <KeyRound className="h-4 w-4" strokeWidth={1.75} />
+              Change PIN
+            </button>
+          )}
+        </motion.div>
+
+        {/* Theme Section */}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <h2 className={`mb-5 text-lg font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Appearance</h2>
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -222,7 +339,7 @@ export default function Settings() {
         </motion.div>
 
         {/* Export Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, duration: 0.3 }}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <div className="mb-5 flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
@@ -250,7 +367,7 @@ export default function Settings() {
         </motion.div>
 
         {/* Import Section */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15, duration: 0.3 }}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <div className="mb-5 flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isDark ? 'bg-[#1a1a1e]' : 'bg-[#f5f5dc]/60'}`}>
@@ -281,7 +398,7 @@ export default function Settings() {
         </motion.div>
 
         {/* Account Actions */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.3 }}
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, duration: 0.3 }}
           className={`card-hover rounded-2xl border p-6 ${isDark ? 'border-[#1a1a1e] bg-[#121214]' : 'border-[#ede9d5] bg-white'}`}>
           <h2 className={`mb-5 text-lg font-semibold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>Account Actions</h2>
           <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">

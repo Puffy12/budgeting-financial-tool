@@ -8,8 +8,9 @@ const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 const db = require('../utils/db');
 const { validateBody } = require('../middleware/validate');
-const { pinLoginSchema, setPinSchema, validateTokenSchema, createUserSchema } = require('../validation/schemas');
+const { pinLoginSchema, setPinSchema, validateTokenSchema, createUserSchema, changePinSchema } = require('../validation/schemas');
 const { generatePinToken, validatePinToken } = require('../auth/pinToken');
+const { requireAuth } = require('../middleware/pinAuth');
 
 /**
  * Strip pinHash from user object before sending to client
@@ -183,6 +184,49 @@ router.post('/register', validateBody(createUserSchema), async (req, res) => {
   } catch (error) {
     console.error('Error during registration:', error);
     res.status(500).json({ error: 'Registration failed' });
+  }
+});
+
+/**
+ * PUT /api/auth/change-pin
+ * Change PIN for an authenticated user (belt-and-suspenders: bearer token + current PIN)
+ */
+router.put('/change-pin', requireAuth, validateBody(changePinSchema), async (req, res) => {
+  try {
+    const { currentPin, newPin } = req.body;
+    const userId = req.auth.userId;
+
+    const user = db.getUserById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    if (!user.pinHash) {
+      return res.status(400).json({ error: 'No PIN set for this user' });
+    }
+
+    // Verify current PIN
+    const isMatch = await bcrypt.compare(currentPin, user.pinHash);
+
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Current PIN is incorrect' });
+    }
+
+    // Hash and store the new PIN
+    const pinHash = await bcrypt.hash(newPin, 12);
+    const updatedUser = db.updateUser(userId, { pinHash });
+
+    // Generate a fresh token
+    const token = generatePinToken(userId);
+
+    return res.json({
+      token,
+      user: sanitizeUser(updatedUser)
+    });
+  } catch (error) {
+    console.error('Error changing pin:', error);
+    res.status(500).json({ error: 'Failed to change PIN' });
   }
 });
 
