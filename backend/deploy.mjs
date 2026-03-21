@@ -375,8 +375,10 @@ function uploadAndDeploy() {
         }
         
         // Install dependencies (from myproject directory)
+        // Uses --ignore-scripts to skip native builds, then rebuilds sharp
+        // separately to fetch the correct prebuilt binary for the server platform
         console.log('\n📦 Installing dependencies...');
-        const npmInstallCommand = `cd ${REMOTE_PROJECT_DIR} && source ${REMOTE_APP_DIR}/activate && npm install --omit=dev`;
+        const npmInstallCommand = `cd ${REMOTE_PROJECT_DIR} && source ${REMOTE_APP_DIR}/activate && npm install --omit=dev --ignore-scripts`;
         const npmResult = await executeCommand(conn, npmInstallCommand, true);
         if (npmResult.code === 0) {
           console.log('✅ Dependencies installed');
@@ -386,6 +388,12 @@ function uploadAndDeploy() {
             console.error(`   Error: ${npmResult.stderr.trim()}`);
           }
         }
+
+        // Rebuild native addons (e.g. sharp) for server platform
+        console.log('\n🔧 Rebuilding native addons for server platform...');
+        const rebuildCommand = `cd ${REMOTE_PROJECT_DIR} && source ${REMOTE_APP_DIR}/activate && npm rebuild --verbose 2>&1 || true`;
+        await executeCommand(conn, rebuildCommand, true);
+        console.log('✅ Native addons rebuilt');
         
         // Start application
         console.log('\n🚀 Starting application...');

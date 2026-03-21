@@ -7,7 +7,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Skill(plan-eng-review)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(./setup)",
+      "WebFetch(domain:cdn.discordapp.com)"
     ]
   }
 }

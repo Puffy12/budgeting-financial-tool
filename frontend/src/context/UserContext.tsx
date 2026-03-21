@@ -1,9 +1,10 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react'
 import type { User, AuthenticatedUser } from '../types'
 import { authApi, usersApi, setApiToken } from '../api'
 
 const AUTH_TOKENS_KEY = 'auth_tokens'
 const KNOWN_USERS_KEY = 'known_users'
+const CACHED_USERS_KEY = 'cached_users'
 
 export interface KnownUser {
   id: string
@@ -75,16 +76,98 @@ function addKnownUser(user: { id: string; name: string; pin?: string }) {
   return known
 }
 
-export function UserProvider({ children }: { children: ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<User | null>(null)
-  const [authenticatedUsers, setAuthenticatedUsers] = useState<AuthenticatedUser[]>([])
-  const [knownUsers, setKnownUsers] = useState<KnownUser[]>(() => getKnownUsers())
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+/**
+ * Cache user objects in localStorage so we can restore them synchronously on refresh
+ */
+function getCachedUsers(): Record<string, User> {
+  try {
+    const raw = localStorage.getItem(CACHED_USERS_KEY)
+    return raw ? JSON.parse(raw) : {}
+  } catch {
+    return {}
+  }
+}
 
-  // On mount, validate all stored tokens and restore authenticated users
-  // If a token is expired but we have a stored PIN, auto-re-login
+function saveCachedUsers(users: Record<string, User>) {
+  localStorage.setItem(CACHED_USERS_KEY, JSON.stringify(users))
+}
+
+function cacheUser(user: User) {
+  const cached = getCachedUsers()
+  cached[user.id] = user
+  saveCachedUsers(cached)
+}
+
+/**
+ * Check if a token is expired by parsing the expiry from the token format (userId:expiryMs:hmac)
+ */
+function isTokenExpired(token: string): boolean {
+  const parts = token.split(':')
+  if (parts.length !== 3) return true
+  const expiryMs = Number(parts[1])
+  if (!Number.isFinite(expiryMs)) return true
+  return Date.now() > expiryMs
+}
+
+/**
+ * Synchronously restore auth state from localStorage.
+ * Called at store creation time so isAuthenticated is true before first render.
+ * This eliminates the race condition where useEffect runs AFTER the initial render.
+ */
+function restoreAuthSync(): {
+  currentUser: User | null
+  authenticatedUsers: AuthenticatedUser[]
+  apiToken: string | null
+} {
+  const tokens = getStoredTokens()
+  const cachedUsers = getCachedUsers()
+  const lastUserId = localStorage.getItem('currentUserId')
+
+  const authenticatedUsers: AuthenticatedUser[] = []
+
+  for (const [userId, token] of Object.entries(tokens)) {
+    if (isTokenExpired(token)) continue
+    const user = cachedUsers[userId]
+    if (user) {
+      authenticatedUsers.push({ user, token })
+    }
+  }
+
+  let currentUser: User | null = null
+  let apiToken: string | null = null
+
+  if (lastUserId) {
+    const found = authenticatedUsers.find(au => au.user.id === lastUserId)
+    if (found) {
+      currentUser = found.user
+      apiToken = found.token
+    }
+  }
+
+  return { currentUser, authenticatedUsers, apiToken }
+}
+
+// Run synchronous restore ONCE at module load time, before any component renders
+const initialAuth = restoreAuthSync()
+if (initialAuth.apiToken) {
+  setApiToken(initialAuth.apiToken)
+}
+
+export function UserProvider({ children }: { children: ReactNode }) {
+  const [currentUser, setCurrentUser] = useState<User | null>(initialAuth.currentUser)
+  const [authenticatedUsers, setAuthenticatedUsers] = useState<AuthenticatedUser[]>(initialAuth.authenticatedUsers)
+  const [knownUsers, setKnownUsers] = useState<KnownUser[]>(() => getKnownUsers())
+  // If we restored a user synchronously, skip the loading state entirely
+  const [loading, setLoading] = useState(initialAuth.currentUser === null && Object.keys(getStoredTokens()).length > 0)
+  const [error, setError] = useState<string | null>(null)
+  const hasValidated = useRef(false)
+
+  // Background validation: confirm tokens with the server, refresh user data,
+  // and handle expired/invalid tokens. This runs AFTER the first render.
   useEffect(() => {
+    if (hasValidated.current) return
+    hasValidated.current = true
+
     let cancelled = false
 
     async function validateStoredTokens() {
@@ -99,20 +182,27 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
       const validUsers: AuthenticatedUser[] = []
       const validTokens: Record<string, string> = {}
-      const triedUserIds = new Set<string>()
 
-      // First pass: validate existing tokens
+      // First pass: validate existing tokens with the server
       await Promise.all(
         entries.map(async ([userId, token]) => {
-          triedUserIds.add(userId)
           try {
             const result = await authApi.validateToken(token)
             if (result.valid && result.user) {
               validUsers.push({ user: result.user, token })
               validTokens[userId] = token
+              // Update cached user data with fresh server data
+              cacheUser(result.user)
             }
           } catch {
-            // Token invalid, skip — will try re-login below
+            // Network error — if token isn't expired client-side, keep the cached session
+            if (!isTokenExpired(token)) {
+              const cachedUsers = getCachedUsers()
+              if (cachedUsers[userId]) {
+                validUsers.push({ user: cachedUsers[userId], token })
+                validTokens[userId] = token
+              }
+            }
           }
         })
       )
@@ -130,6 +220,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
             if ('token' in result && 'user' in result) {
               validUsers.push({ user: result.user, token: result.token })
               validTokens[result.user.id] = result.token
+              cacheUser(result.user)
             }
           } catch {
             // Re-login failed, skip
@@ -143,13 +234,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       saveTokens(validTokens)
       setAuthenticatedUsers(validUsers)
 
-      // Restore current user from localStorage
+      // Restore/update current user with fresh server data
       const lastUserId = localStorage.getItem('currentUserId')
       if (lastUserId) {
         const found = validUsers.find(au => au.user.id === lastUserId)
         if (found) {
           setApiToken(found.token)
           setCurrentUser(found.user)
+        } else {
+          // Token was definitively invalid (not a network error) — clear the user
+          setCurrentUser(null)
+          setApiToken(null)
         }
       }
 
@@ -199,6 +294,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const tokens = getStoredTokens()
     tokens[user.id] = token
     saveTokens(tokens)
+
+    // Cache user object so we can restore it synchronously on next page load
+    cacheUser(user)
 
     setApiToken(token)
 
@@ -298,6 +396,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const tokens = getStoredTokens()
     delete tokens[userId]
     saveTokens(tokens)
+
+    // Remove cached user
+    const cached = getCachedUsers()
+    delete cached[userId]
+    saveCachedUsers(cached)
 
     // Remove from authenticated users
     setAuthenticatedUsers(prev => prev.filter(au => au.user.id !== userId))
