@@ -1,0 +1,35 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/features/home/components/QuickSignIn.tsx"
+        ],
+        "createdAt": "2026-10-16T19:55:40.223Z",
+        "reason": "Existing quick-sign-in classes copied from the current UI. Mike confirmed this restructure must not change colors."
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "*",
+        "files": [
+          "src/features/recurring/components/RecurringList.tsx"
+        ],
+        "createdAt": "2026-10-16T19:55:40.239Z",
+        "reason": "Existing recurring-list classes copied from the current UI. Mike confirmed this restructure must not change colors."
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "docs/design-review/themes.html"
+        ],
+        "createdAt": "2026-10-16T20:05:46.594Z",
+        "reason": "Mike asked for glows and a luxury finish on the approved Precise instrument theme preview."
+      }
+    ]
+  }
+}
