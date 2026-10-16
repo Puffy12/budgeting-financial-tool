@@ -26,6 +26,7 @@ export function MobileNav(props: Props) {
         <div className="flex items-center justify-between px-4 py-3">
           <button
             onClick={() => setMobileNavOpen(true)}
+            aria-label="Open navigation"
             className={`rounded-xl p-2.5 transition-colors text-[var(--muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]`}
           >
             <Menu className="h-6 w-6" strokeWidth={1.75} />
@@ -65,6 +66,7 @@ export function MobileNav(props: Props) {
                   </div>
                   <button
                     onClick={() => setMobileNavOpen(false)}
+                    aria-label="Close navigation"
                     className={`rounded-xl p-2.5 transition-colors text-[var(--muted)] hover:bg-[var(--bg)] hover:text-[var(--text)]`}
                   >
                     <X className="h-5 w-5" strokeWidth={1.75} />
