@@ -7,6 +7,8 @@ import TransactionsPage from './features/transactions/TransactionsPage'
 import CategoriesPage from './features/categories/CategoriesPage'
 import RecurringPage from './features/recurring/RecurringPage'
 import BreakdownPage from './features/breakdown/BreakdownPage'
+import CategorySpendPage from './features/breakdown/CategorySpendPage'
+import MonthBreakdownPage from './features/breakdown/MonthBreakdownPage'
 import SettingsPage from './features/settings/SettingsPage'
 import SuggestionsPage from './features/suggestions/SuggestionsPage'
 import Layout from './components/layout/Layout'
@@ -23,6 +25,8 @@ function App() {
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="recurring" element={<RecurringPage />} />
             <Route path="breakdown" element={<BreakdownPage />} />
+            <Route path="breakdown/month/:year/:month" element={<MonthBreakdownPage />} />
+            <Route path="breakdown/category/:categoryId" element={<CategorySpendPage />} />
             <Route path="suggestions" element={<SuggestionsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
