@@ -8,6 +8,7 @@ const categoriesRouter = require('./routes/categories');
 const transactionsRouter = require('./routes/transactions');
 const recurringRouter = require('./routes/recurring');
 const exportRouter = require('./routes/export');
+const budgetsRouter = require('./routes/budgets');
 const authRouter = require('./routes/auth');
 const db = require('./db');
 const { processRecurringTransactions } = require('./services/recurringProcessor');
@@ -70,6 +71,7 @@ function createApp() {
   app.use('/api/users/:userId/categories', requireAuth, requireOwnership, categoriesRouter);
   app.use('/api/users/:userId/transactions', requireAuth, requireOwnership, transactionsRouter);
   app.use('/api/users/:userId/recurring', requireAuth, requireOwnership, recurringRouter);
+  app.use('/api/users/:userId/budgets', requireAuth, requireOwnership, budgetsRouter);
   app.use('/api/users/:userId', requireAuth, requireOwnership, exportRouter);
   app.use('/api/users', requireAuth, usersRouter);
 
