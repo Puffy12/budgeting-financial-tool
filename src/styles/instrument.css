@@ -1,0 +1,133 @@
+/* Precise instrument. Tokens override the legacy cream and emerald theme. */
+
+:root {
+  --color-primary-50: #e8eef6;
+  --color-primary-100: #d4e2f0;
+  --color-primary-200: #b7d0e6;
+  --color-primary-300: #8fb4d4;
+  --color-primary-400: #5d8fb8;
+  --color-primary-500: #1a456e;
+  --color-primary-600: #163a5c;
+  --color-primary-700: #12324f;
+  --color-primary-800: #0e283f;
+  --color-primary-900: #0a1c2e;
+  --font-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --bg: #eef1f4;
+  --surface: #f8f9fb;
+  --text: #12171d;
+  --muted: #4e5966;
+  --line: #8fa0b0;
+  --brand: #1a456e;
+  --brand-accent: #3f6284;
+  --status-ok: #0d6b3c;
+  --status-ok-fill: #e5f6ec;
+  --status-warn: #7a5206;
+  --status-warn-fill: #fbf3d4;
+  --status-over: #a61b14;
+  --status-over-fill: #fdecea;
+  color-scheme: light;
+}
+
+html.dark {
+  --bg: #070b12;
+  --surface: #101820;
+  --text: #f7fbff;
+  --muted: #d5e4f0;
+  --line: #67c8ea;
+  --brand: #8eebff;
+  --brand-accent: #3ec6ef;
+  --color-primary-300: #bff6ff;
+  --color-primary-400: #9aefff;
+  --color-primary-500: #1493c4;
+  --color-primary-600: #0c6e96;
+  --status-ok: #8ed7ae;
+  --status-ok-fill: #10281c;
+  --status-warn: #f0d48a;
+  --status-warn-fill: #33280f;
+  --status-over: #f5b2aa;
+  --status-over-fill: #3a1816;
+  color-scheme: dark;
+}
+
+body {
+  background:
+    radial-gradient(520px 280px at 0% -10%, color-mix(in srgb, var(--brand) 28%, transparent), transparent 70%),
+    linear-gradient(168deg, color-mix(in srgb, var(--bg) 82%, white), var(--bg) 48%, color-mix(in srgb, var(--bg) 86%, var(--brand)));
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+html.dark body {
+  background:
+    radial-gradient(520px 280px at 8% -10%, rgba(62, 210, 255, 0.28), transparent 68%),
+    radial-gradient(420px 260px at 100% 0%, rgba(70, 110, 255, 0.2), transparent 70%),
+    linear-gradient(180deg, #0d1724 0%, var(--bg) 52%, #05070c 100%);
+  color: var(--text);
+}
+
+.money {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.panel {
+  border: 1px solid transparent;
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 88%, white), var(--surface)) padding-box,
+    linear-gradient(135deg, color-mix(in srgb, white 72%, var(--brand)), var(--brand) 46%, color-mix(in srgb, var(--brand-accent) 50%, transparent)) border-box;
+  box-shadow:
+    0 16px 32px -20px color-mix(in srgb, var(--brand) 70%, transparent),
+    inset 0 1px 0 color-mix(in srgb, white 48%, transparent);
+}
+
+html.dark .panel {
+  background:
+    linear-gradient(180deg, #172433, var(--surface)) padding-box,
+    linear-gradient(140deg, #d8f7ff, #3ec6ef 42%, rgba(62, 198, 239, 0.25)) border-box;
+  box-shadow:
+    0 16px 32px -16px rgba(0, 0, 0, 0.8),
+    0 10px 28px -8px rgba(62, 210, 255, 0.45),
+    inset 0 1px 0 rgba(216, 247, 255, 0.28);
+}
+
+html.dark .brand-mark {
+  filter: drop-shadow(0 8px 12px rgba(62, 210, 255, 0.55));
+}
+
+html.dark .btn-premium,
+html.dark .bg-gradient-to-r.from-primary-500,
+html.dark .bg-gradient-to-br.from-primary-500 {
+  box-shadow: 0 12px 28px -8px rgba(62, 210, 255, 0.75);
+}
+
+.status-ok,
+.status-warn,
+.status-over {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-weight: 600;
+}
+
+.status-ok {
+  color: var(--status-ok);
+  background: var(--status-ok-fill);
+  box-shadow: 0 8px 16px -12px color-mix(in srgb, var(--status-ok) 80%, transparent), 0 0 16px color-mix(in srgb, var(--status-ok) 35%, transparent);
+}
+
+.status-warn {
+  color: var(--status-warn);
+  background: var(--status-warn-fill);
+  box-shadow: 0 8px 16px -12px color-mix(in srgb, var(--status-warn) 80%, transparent), 0 0 16px color-mix(in srgb, var(--status-warn) 32%, transparent);
+}
+
+.status-over {
+  color: var(--status-over);
+  background: var(--status-over-fill);
+  box-shadow: 0 8px 16px -12px color-mix(in srgb, var(--status-over) 80%, transparent), 0 0 16px color-mix(in srgb, var(--status-over) 32%, transparent);
+}
+
+*:focus-visible {
+  outline-color: var(--brand);
+}
