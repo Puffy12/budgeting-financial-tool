@@ -82,7 +82,7 @@ export function compare(project, destination) {
   return { unchanged: true, ...actual.counts, recent: actual.recent };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(fs.realpathSync(process.argv[1])).href) {
   const [mode, project, destination] = process.argv.slice(2);
   try {
     if (!['backup', 'compare', 'inspect'].includes(mode)) throw new Error('Expected backup, compare, or inspect');
