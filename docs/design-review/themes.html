@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Budget app theme directions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Commissioner:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --page: #f6f5f2;
+      --ink: #1c1b19;
+      --quiet: #5c5852;
+      --line: #d9d4cc;
+      --status-ok: #0d6b3c;
+      --status-ok-fill: #e5f6ec;
+      --status-warn: #7a5206;
+      --status-warn-fill: #fbf3d4;
+      --status-over: #a61b14;
+      --status-over-fill: #fdecea;
+      --status-ok-dark: #8ed7ae;
+      --status-ok-fill-dark: #10281c;
+      --status-warn-dark: #f0d48a;
+      --status-warn-fill-dark: #33280f;
+      --status-over-dark: #f5b2aa;
+      --status-over-fill-dark: #3a1816;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--page);
+      color: var(--ink);
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    a { color: inherit; }
+    a:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+    .page {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 32px 20px 80px;
+    }
+
+    header.intro h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+
+    header.intro p { margin: 0 0 10px; max-width: 68ch; color: var(--quiet); }
+
+    nav.jump { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 18px 0 8px; }
+    nav.jump a { font-size: 14px; font-weight: 600; }
+
+    .rule {
+      margin: 20px 0 36px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      background: #fff;
+      max-width: 68ch;
+    }
+
+    .rule strong { font-weight: 600; }
+    .rule p { margin: 0; }
+
+    .theme { margin: 0 0 56px; }
+    .theme h2 {
+      margin: 0 0 6px;
+      font-size: 32px;
+      line-height: 1.15;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+    .mood { margin: 0 0 18px; max-width: 62ch; font-size: 17px; line-height: 1.45; }
+
+    .mode {
+      padding: 16px;
+      margin: 0 0 12px;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .mode h3 {
+      margin: 0 0 12px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .swatch {
+      min-height: 76px;
+      padding: 8px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      border: 1px solid rgba(80, 80, 80, 0.28);
+    }
+
+    .swatch b,
+    .swatch span {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .swatch span { font-weight: 500; font-variant-numeric: tabular-nums; }
+
+    .label {
+      margin: 0 0 8px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .chip-line {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 12px;
+      margin: 0 0 8px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 2px 10px;
+      border-radius: 4px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
+    .chip.ok { color: var(--status-ok); background: var(--status-ok-fill); border: 1px solid var(--status-ok); }
+    .chip.warn { color: var(--status-warn); background: var(--status-warn-fill); border: 1px solid var(--status-warn); }
+    .chip.over { color: var(--status-over); background: var(--status-over-fill); border: 1px solid var(--status-over); }
+    .mode.dark .chip.ok { color: var(--status-ok-dark); background: var(--status-ok-fill-dark); border-color: var(--status-ok-dark); }
+    .mode.dark .chip.warn { color: var(--status-warn-dark); background: var(--status-warn-fill-dark); border-color: var(--status-warn-dark); }
+    .mode.dark .chip.over { color: var(--status-over-dark); background: var(--status-over-fill-dark); border-color: var(--status-over-dark); }
+
+    .hex {
+      font-family: ui-monospace, "SFMono-Regular", monospace;
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .strip {
+      max-width: 520px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 14px 12px;
+    }
+
+    .month {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .month-label {
+      margin: 0;
+      font-family: var(--title-font);
+      font-size: 22px;
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    .spent {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-family: var(--body-font);
+      font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .meter {
+      margin: 10px 0 14px;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .meter span {
+      display: block;
+      height: 100%;
+      width: 68.25%;
+      background: var(--status-ok);
+    }
+
+    .mode.dark .meter span { background: var(--status-ok-dark); }
+
+    .tx {
+      display: grid;
+      grid-template-columns: 22px minmax(0, 1fr) auto;
+      column-gap: 10px;
+      align-items: center;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+
+    .tx [data-slot="icon"] { color: var(--text); }
+
+    .tx-main { min-width: 0; }
+
+    .tx-desc {
+      margin: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: var(--body-font);
+      font-size: 14px;
+      line-height: 1.3;
+    }
+
+    .tx-meta {
+      margin: 2px 0 0;
+      color: var(--muted);
+      font-family: var(--body-font);
+      font-size: 12px;
+      line-height: 1.3;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .tx-amt {
+      margin: 0;
+      font-family: var(--money-font);
+      font-size: 15px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .insight {
+      display: flex;
+      gap: 8px;
+      align-items: baseline;
+      margin: 10px 0 0;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      font-family: var(--body-font);
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .insight .k {
+      flex: none;
+      color: var(--brand);
+      font-weight: 600;
+      font-size: 13px;
+    }
+
+    .type-sample { margin-top: 16px; max-width: 520px; }
+    .type-sample .t-title {
+      margin: 0;
+      font-family: var(--title-font);
+      font-size: 32px;
+      font-weight: 600;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .type-sample .t-body {
+      margin: 6px 0 0;
+      max-width: 58ch;
+      font-family: var(--body-font);
+      font-size: 15px;
+      line-height: 1.45;
+    }
+    .type-sample .t-money {
+      margin: 8px 0 0;
+      font-family: var(--money-font);
+      font-size: 28px;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: 0;
+      line-height: 1.2;
+    }
+    .font-note {
+      margin: 8px 0 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .icons { margin-top: 8px; }
+    .icon-stage {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+      gap: 8px;
+      padding: 12px;
+      margin: 0 0 8px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .icon-stage figure {
+      margin: 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      text-align: center;
+    }
+
+    .icon-stage figcaption {
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 11px;
+      line-height: 1.25;
+      color: var(--muted);
+    }
+
+    .icon-stage .is-selected { color: var(--brand); }
+    .icon-stage .is-selected figcaption { color: var(--brand); font-weight: 600; }
+
+    [data-slot="icon"] {
+      width: 22px;
+      height: 22px;
+      display: block;
+      flex: none;
+    }
+
+    .sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+    footer.note {
+      max-width: 68ch;
+      color: var(--quiet);
+      font-size: 14px;
+    }
+
+    /* Luxury finish for the approved instrument direction.
+       Glow marks budget status and the brand. It is not a second palette. */
+    #instrument.luxury {
+      --radius: 16px;
+    }
+
+    #instrument.luxury .mode {
+      position: relative;
+      isolation: isolate;
+      overflow: hidden;
+      border-color: transparent;
+      background:
+        radial-gradient(460px 240px at 8% -12%, color-mix(in srgb, var(--brand) 30%, transparent), transparent 70%),
+        radial-gradient(380px 260px at 108% 8%, color-mix(in srgb, var(--brand-accent) 24%, transparent), transparent 72%),
+        linear-gradient(168deg, color-mix(in srgb, var(--bg) 78%, white), var(--bg) 46%, color-mix(in srgb, var(--bg) 82%, var(--brand)));
+      box-shadow:
+        0 22px 44px -28px color-mix(in srgb, var(--brand) 65%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 62%, transparent);
+    }
+
+    #instrument.luxury .mode.dark {
+      background:
+        radial-gradient(520px 280px at 6% -10%, color-mix(in srgb, var(--brand) 42%, transparent), transparent 68%),
+        radial-gradient(420px 300px at 100% 108%, color-mix(in srgb, var(--brand-accent) 34%, transparent), transparent 70%),
+        linear-gradient(168deg, #16202c 0%, var(--bg) 46%, #070b10 100%);
+      box-shadow:
+        0 28px 56px -30px rgba(0, 0, 0, 0.72),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    #instrument.luxury .mode::before {
+      content: "";
+      position: absolute;
+      z-index: 0;
+      width: 280px;
+      height: 280px;
+      top: -90px;
+      right: -40px;
+      pointer-events: none;
+      background: radial-gradient(circle, color-mix(in srgb, var(--brand) 55%, transparent), transparent 68%);
+      filter: blur(6px);
+      animation: instrument-drift 16s cubic-bezier(0.16, 1, 0.3, 1) infinite alternate;
+    }
+
+    #instrument.luxury .mode > * { position: relative; z-index: 1; }
+
+    #instrument.luxury .strip,
+    #instrument.luxury .icon-stage {
+      border: 1px solid transparent;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 86%, white), var(--surface)) padding-box,
+        linear-gradient(135deg, color-mix(in srgb, white 78%, var(--brand)), var(--brand) 42%, color-mix(in srgb, var(--brand-accent) 55%, transparent)) border-box;
+      box-shadow:
+        0 16px 32px -20px color-mix(in srgb, var(--brand) 75%, transparent),
+        inset 0 1px 0 color-mix(in srgb, white 50%, transparent);
+    }
+
+    #instrument.luxury .mode.dark .strip,
+    #instrument.luxury .icon-stage.dark-stage {
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface) 70%, white), var(--surface)) padding-box,
+        linear-gradient(140deg, rgba(255, 255, 255, 0.55), color-mix(in srgb, var(--brand) 80%, white) 38%, rgba(255, 255, 255, 0.08)) border-box;
+      box-shadow:
+        0 18px 36px -18px rgba(0, 0, 0, 0.65),
+        0 0 28px color-mix(in srgb, var(--brand) 28%, transparent),
+        inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    }
+
+    #instrument.luxury .chip {
+      transition: box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    #instrument.luxury .chip.ok {
+      box-shadow:
+        0 8px 16px -10px color-mix(in srgb, var(--status-ok) 80%, transparent),
+        0 0 18px color-mix(in srgb, var(--status-ok) 42%, transparent);
+    }
+
+    #instrument.luxury .chip.warn {
+      box-shadow:
+        0 8px 16px -10px color-mix(in srgb, var(--status-warn) 80%, transparent),
+        0 0 18px color-mix(in srgb, var(--status-warn) 40%, transparent);
+    }
+
+    #instrument.luxury .chip.over {
+      box-shadow:
+        0 8px 16px -10px color-mix(in srgb, var(--status-over) 80%, transparent),
+        0 0 18px color-mix(in srgb, var(--status-over) 40%, transparent);
+    }
+
+    #instrument.luxury .mode.dark .chip.ok {
+      box-shadow:
+        0 10px 18px -12px rgba(0, 0, 0, 0.6),
+        0 0 22px color-mix(in srgb, var(--status-ok-dark) 55%, transparent);
+    }
+
+    #instrument.luxury .mode.dark .chip.warn {
+      box-shadow:
+        0 10px 18px -12px rgba(0, 0, 0, 0.6),
+        0 0 22px color-mix(in srgb, var(--status-warn-dark) 50%, transparent);
+    }
+
+    #instrument.luxury .mode.dark .chip.over {
+      box-shadow:
+        0 10px 18px -12px rgba(0, 0, 0, 0.6),
+        0 0 22px color-mix(in srgb, var(--status-over-dark) 50%, transparent);
+    }
+
+    #instrument.luxury .meter {
+      background: color-mix(in srgb, var(--border) 55%, transparent);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.18);
+    }
+
+    #instrument.luxury .meter span {
+      background: linear-gradient(90deg, var(--brand), var(--status-ok));
+      box-shadow: 0 0 12px color-mix(in srgb, var(--status-ok) 70%, transparent);
+    }
+
+    #instrument.luxury .mode.dark .meter span {
+      background: linear-gradient(90deg, var(--brand), var(--status-ok-dark));
+      box-shadow: 0 0 14px color-mix(in srgb, var(--status-ok-dark) 75%, transparent);
+    }
+
+    #instrument.luxury .t-money {
+      text-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 35%, transparent);
+    }
+
+    #instrument.luxury .icon-stage .is-selected [data-slot="icon"] {
+      filter: drop-shadow(0 0 6px color-mix(in srgb, var(--brand) 75%, transparent));
+    }
+
+    @keyframes instrument-drift {
+      from { transform: translate3d(0, 0, 0); }
+      to { transform: translate3d(-28px, 18px, 0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #instrument.luxury .mode::before { animation: none; }
+    }
+  </style>
+</head>
+<body>
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-groceries" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 5.5h2.1l.7 2"/>
+        <path d="M6.8 7.5h13l-1.6 7.4a1.5 1.5 0 0 1-1.5 1.2H8.6a1.5 1.5 0 0 1-1.5-1.3L6.3 7.5"/>
+        <circle cx="9" cy="19" r="1.15"/>
+        <circle cx="16.5" cy="19" r="1.15"/>
+      </g>
+    </symbol>
+    <symbol id="i-rent" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 20.5V6.2L12 3.2l7 3v14.3"/>
+        <path d="M5 20.5h14"/>
+        <path d="M9 9.2h2.1V11H9zM12.9 9.2H15V11h-2.1zM9 13.2h2.1V15H9zM12.9 13.2H15V15h-2.1z"/>
+        <path d="M10.3 20.5v-3.3h3.4v3.3"/>
+      </g>
+    </symbol>
+    <symbol id="i-utilities" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9.2 18h5.6"/>
+        <path d="M10.2 21h3.6"/>
+        <path d="M12 3.2a5.5 5.5 0 0 0-2.9 10.1c.45.4.8 1 .9 1.6V17h4v-2.1c.1-.6.45-1.2.9-1.6A5.5 5.5 0 0 0 12 3.2z"/>
+      </g>
+    </symbol>
+    <symbol id="i-transport" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 15.5h16"/>
+        <path d="M6.2 15.5 8.2 9.2A1.5 1.5 0 0 1 9.6 8h4.8a1.5 1.5 0 0 1 1.4 1.2l2 6.3"/>
+        <circle cx="7.5" cy="18.2" r="1.35"/>
+        <circle cx="16.5" cy="18.2" r="1.35"/>
+      </g>
+    </symbol>
+    <symbol id="i-entertainment" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3.5" y="5" width="17" height="14" rx="1.4"/>
+        <path d="M8 5v14M16 5v14"/>
+        <path d="M3.5 9H8M3.5 12H8M3.5 15H8M16 9h4.5M16 12h4.5M16 15h4.5"/>
+      </g>
+    </symbol>
+    <symbol id="i-dining" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 4v6.5"/>
+        <path d="M5.8 4v5.4"/>
+        <path d="M10.2 4v5.4"/>
+        <path d="M5.8 9.4c0 1.5.9 2.4 2.2 2.4s2.2-.9 2.2-2.4"/>
+        <path d="M8 11.8V20"/>
+        <path d="M16 4v16"/>
+        <path d="M16 4c2 1.7 2.5 3.8 2.5 6.3S18 15 16 15"/>
+      </g>
+    </symbol>
+    <symbol id="i-healthcare" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6.2 4.2v5.2a2.8 2.8 0 0 0 5.6 0V4.2"/>
+        <path d="M5.2 4.2h2M11 4.2h2"/>
+        <path d="M9 12.2v1.1a4 4 0 0 0 4 4h1.5"/>
+        <circle cx="17.3" cy="17.4" r="2.2"/>
+      </g>
+    </symbol>
+    <symbol id="i-shopping" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6.2 8h11.6l-1 11.1a1.3 1.3 0 0 1-1.3 1.2H8.5a1.3 1.3 0 0 1-1.3-1.2L6.2 8z"/>
+        <path d="M9 8V6.3A3 3 0 0 1 12 3.4 3 3 0 0 1 15 6.3V8"/>
+      </g>
+    </symbol>
+    <symbol id="i-subscriptions" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="5" width="12.2" height="12.2" rx="1.4"/>
+        <path d="M3 9h12.2"/>
+        <path d="M6.4 3.4v3M11.2 3.4v3"/>
+        <circle cx="17.2" cy="16.6" r="3.5"/>
+        <path d="M17.2 14.8v1.9l1.2.8"/>
+      </g>
+    </symbol>
+    <symbol id="i-salary" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="6.2" width="18" height="12" rx="1.6"/>
+        <path d="M3 10.4h18"/>
+        <path d="M15.2 14.4h3"/>
+      </g>
+    </symbol>
+    <symbol id="i-investments" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.5 16.5 9 11l3.6 3.4 8-8.2"/>
+        <path d="M14.2 6.2H20.5V12.4"/>
+      </g>
+    </symbol>
+    <symbol id="i-other" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3.5 7.4A1.4 1.4 0 0 1 4.9 6h4.2l1.8 1.8h8.2a1.4 1.4 0 0 1 1.4 1.4v8a1.4 1.4 0 0 1-1.4 1.4H4.9a1.4 1.4 0 0 1-1.4-1.4v-9.8z"/>
+      </g>
+    </symbol>
+    <symbol id="i-home" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 11.2 12 4l8 7.2"/>
+        <path d="M6.6 10.4V20h10.8v-9.6"/>
+        <path d="M10.2 20v-4.4h3.6V20"/>
+      </g>
+    </symbol>
+    <symbol id="i-transactions" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 3.5h10V20l-1.7-1.1-1.6 1.1-1.7-1.1-1.6 1.1L8.7 18.9 7 20V3.5z"/>
+        <path d="M9.5 8h5M9.5 11.5h5M9.5 15h3.2"/>
+      </g>
+    </symbol>
+    <symbol id="i-insights" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="7.6"/>
+        <path d="M12 12V4.4"/>
+        <path d="M12 12l6.2 4.1"/>
+      </g>
+    </symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24">
+      <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 3.2v2.2M12 18.6V20.8M3.2 12h2.2M18.6 12h2.2M5.7 5.7l1.6 1.6M16.7 16.7l1.6 1.6M18.3 5.7l-1.6 1.6M7.3 16.7 5.7 18.3"/>
+      </g>
+    </symbol>
+  </svg>
+
+  <div class="page">
+    <header class="intro">
+      <h1>Three theme directions</h1>
+      <p>Proposal only. The budgeting app is unchanged. Precise instrument is the direction to build. Its panels now carry a platinum edge, a soft brand glow, and status light on green, yellow, and red. The other two stay flat so the luxury finish is easy to compare.</p>
+      <p>Today the app is warm paper (<span class="hex">#faf9f6</span>, <span class="hex">#ede9d5</span>), near-black (<span class="hex">#121214</span>, <span class="hex">#1a1a1e</span>), Inter, and an emerald brand (<span class="hex">#10b981</span>). These directions move the brand off green.</p>
+      <nav class="jump" aria-label="Directions">
+        <a href="#instrument">Precise instrument</a>
+        <a href="#editorial">Editorial paper</a>
+        <a href="#ledger">Quiet night ledger</a>
+      </nav>
+    </header>
+
+    <div class="rule">
+      <p><strong>Status is shared across all three.</strong> Green means inside the monthly budget. Yellow means close. Red means over. Brand color marks selection and actions, including the Insight label and the selected Insights icon. Amounts stay in ink, with a minus for an expense.</p>
+    </div>
+
+    <article class="theme" id="editorial" style="--title-font: Newsreader, 'Iowan Old Style', Palatino, Georgia, serif; --body-font: 'Public Sans', 'Avenir Next', system-ui, sans-serif; --money-font: 'Public Sans', 'Avenir Next', system-ui, sans-serif; --radius: 2px;">
+      <h2 style="font-family: Newsreader, Georgia, serif">Editorial paper</h2>
+      <p class="mood" style="font-family: 'Public Sans', system-ui, sans-serif">A monthly review set like a printed page: warm paper, sharp ink, and an oxide accent for actions.</p>
+
+      <section class="mode" style="--bg: #f3efe6; --surface: #fbf9f4; --text: #1a1714; --muted: #5e574e; --border: #aea395; --brand: #7a3e2e; --brand-accent: #8d6848;">
+        <h3>Light</h3>
+        <div class="swatches" data-swatches="light"></div>
+        <div class="status-block" data-status="light"></div>
+        <div class="strip-wrap" data-strip="light"></div>
+        <div class="type-sample">
+          <p class="t-title">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money">$1,016.00</p>
+          <p class="font-note">Newsreader for titles. Public Sans for body and money.</p>
+        </div>
+      </section>
+
+      <section class="mode dark" style="--bg: #161412; --surface: #211e1b; --text: #f3efe6; --muted: #b3aa9e; --border: #6a6056; --brand: #e4c2ae; --brand-accent: #c4a48c;">
+        <h3>Dark</h3>
+        <div class="swatches" data-swatches="dark"></div>
+        <div class="status-block" data-status="dark"></div>
+        <div class="strip-wrap" data-strip="dark"></div>
+        <div class="type-sample">
+          <p class="t-title">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money">$1,016.00</p>
+          <p class="font-note">Same pairing, set in the night paper colors.</p>
+        </div>
+      </section>
+
+      <div class="icons">
+        <p class="label">Icons. Categories use ink. The selected nav item uses brand.</p>
+        <div class="icon-stage" data-icons style="--surface:#fbf9f4; --text:#1a1714; --muted:#5e574e; --border:#aea395; --brand:#7a3e2e;"></div>
+        <div class="icon-stage" data-icons style="--surface:#211e1b; --text:#f3efe6; --muted:#b3aa9e; --border:#6a6056; --brand:#e4c2ae;"></div>
+      </div>
+    </article>
+
+    <article class="theme luxury" id="instrument" style="--title-font: 'IBM Plex Sans', 'Avenir Next', system-ui, sans-serif; --body-font: 'IBM Plex Sans', 'Avenir Next', system-ui, sans-serif; --money-font: 'IBM Plex Mono', ui-monospace, monospace; --radius: 16px;">
+      <h2 style="font-family: 'IBM Plex Sans', system-ui, sans-serif; font-size: 28px;">Precise instrument</h2>
+      <p class="mood" style="font-family: 'IBM Plex Sans', system-ui, sans-serif">A cool platinum panel. Figures stay the loudest thing. Gradients and glow mark the metal edge, the brand, and whether the month is inside, close, or over.</p>
+
+      <section class="mode" style="--bg: #eef1f4; --surface: #f8f9fb; --text: #12171d; --muted: #4e5966; --border: #8fa0b0; --brand: #1a456e; --brand-accent: #3f6284;">
+        <h3>Light</h3>
+        <div class="swatches" data-swatches="light"></div>
+        <div class="status-block" data-status="light"></div>
+        <div class="strip-wrap" data-strip="light" data-title-size="18px"></div>
+        <div class="type-sample">
+          <p class="t-title" style="font-size: 22px; letter-spacing: 0;">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money" style="font-size: 26px;">$1,016.00</p>
+          <p class="font-note">IBM Plex Sans for text. IBM Plex Mono for money.</p>
+        </div>
+      </section>
+
+      <section class="mode dark" style="--bg: #0d1116; --surface: #151b22; --text: #e8eef4; --muted: #a8b4c0; --border: #4a5c6e; --brand: #b7d0e6; --brand-accent: #9bb6cc;">
+        <h3>Dark</h3>
+        <div class="swatches" data-swatches="dark"></div>
+        <div class="status-block" data-status="dark"></div>
+        <div class="strip-wrap" data-strip="dark" data-title-size="18px"></div>
+        <div class="type-sample">
+          <p class="t-title" style="font-size: 22px; letter-spacing: 0;">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money" style="font-size: 26px;">$1,016.00</p>
+          <p class="font-note">Same pairing, set on the instrument dark ground.</p>
+        </div>
+      </section>
+
+      <div class="icons">
+        <p class="label">Icons. Categories use ink. The selected nav item uses brand.</p>
+        <div class="icon-stage" data-icons style="--surface:#f8f9fb; --text:#12171d; --muted:#4e5966; --border:#8fa0b0; --brand:#1a456e;"></div>
+        <div class="icon-stage dark-stage" data-icons style="--surface:#151b22; --text:#e8eef4; --muted:#a8b4c0; --border:#4a5c6e; --brand:#b7d0e6;"></div>
+      </div>
+    </article>
+
+    <article class="theme" id="ledger" style="--title-font: Commissioner, 'Avenir Next', system-ui, sans-serif; --body-font: Commissioner, 'Avenir Next', system-ui, sans-serif; --money-font: Commissioner, 'Avenir Next', system-ui, sans-serif; --radius: 4px;">
+      <h2 style="font-family: Commissioner, system-ui, sans-serif; font-weight: 500;">Quiet night ledger</h2>
+      <p class="mood" style="font-family: Commissioner, system-ui, sans-serif">A dark-first account book in bone and ink, with a daylight version of the same system.</p>
+
+      <section class="mode dark" style="--bg: #101318; --surface: #181c22; --text: #e7ecf1; --muted: #aeb6c0; --border: #4c5664; --brand: #e0d0b4; --brand-accent: #b6a68a;">
+        <h3>Dark, primary for this direction</h3>
+        <div class="swatches" data-swatches="dark"></div>
+        <div class="status-block" data-status="dark"></div>
+        <div class="strip-wrap" data-strip="dark" data-title-weight="500"></div>
+        <div class="type-sample">
+          <p class="t-title" style="font-size: 26px; font-weight: 500;">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money" style="font-weight: 500;">$1,016.00</p>
+          <p class="font-note">Commissioner for title, body, and money.</p>
+        </div>
+      </section>
+
+      <section class="mode" style="--bg: #f2f4f6; --surface: #fbfcfd; --text: #141a22; --muted: #4d5864; --border: #9aa6b0; --brand: #6e5a38; --brand-accent: #7a6544;">
+        <h3>Light</h3>
+        <div class="swatches" data-swatches="light"></div>
+        <div class="status-block" data-status="light"></div>
+        <div class="strip-wrap" data-strip="light" data-title-weight="500"></div>
+        <div class="type-sample">
+          <p class="t-title" style="font-size: 26px; font-weight: 500;">October 2026</p>
+          <p class="t-body">Spent $2,184.00 of $3,200.00. The description wraps here. Figures stay tabular.</p>
+          <p class="t-money" style="font-weight: 500;">$1,016.00</p>
+          <p class="font-note">Same family, on the daylight ground.</p>
+        </div>
+      </section>
+
+      <div class="icons">
+        <p class="label">Icons. Categories use ink. The selected nav item uses brand.</p>
+        <div class="icon-stage" data-icons style="--surface:#181c22; --text:#e7ecf1; --muted:#aeb6c0; --border:#4c5664; --brand:#e0d0b4;"></div>
+        <div class="icon-stage" data-icons style="--surface:#fbfcfd; --text:#141a22; --muted:#4d5864; --border:#9aa6b0; --brand:#6e5a38;"></div>
+      </div>
+    </article>
+
+    <footer class="note">
+      <p>The long grocery line is clipped on purpose. The amount stays on one line. Dates in the product stay year-month-day and display from noon local time so the day does not shift. Notes on Lucide ids, and which direction I recommend, are in proposal.md beside this file.</p>
+    </footer>
+  </div>
+
+  <script>
+    const PALETTES = {
+      editorial: {
+        light: [
+          ["Background", "#f3efe6", "#1a1714"],
+          ["Surface", "#fbf9f4", "#1a1714"],
+          ["Text", "#1a1714", "#f3efe6"],
+          ["Muted text", "#5e574e", "#f3efe6"],
+          ["Border", "#aea395", "#1a1714"],
+          ["Brand", "#7a3e2e", "#fbf9f4"],
+          ["Brand accent", "#8d6848", "#fbf9f4"]
+        ],
+        dark: [
+          ["Background", "#161412", "#f3efe6"],
+          ["Surface", "#211e1b", "#f3efe6"],
+          ["Text", "#f3efe6", "#161412"],
+          ["Muted text", "#b3aa9e", "#161412"],
+          ["Border", "#6a6056", "#f3efe6"],
+          ["Brand", "#e4c2ae", "#161412"],
+          ["Brand accent", "#c4a48c", "#161412"]
+        ]
+      },
+      instrument: {
+        light: [
+          ["Background", "#eef1f4", "#12171d"],
+          ["Surface", "#f8f9fb", "#12171d"],
+          ["Text", "#12171d", "#e8eef4"],
+          ["Muted text", "#4e5966", "#e8eef4"],
+          ["Border", "#8fa0b0", "#12171d"],
+          ["Brand", "#1a456e", "#f8f9fb"],
+          ["Brand accent", "#3f6284", "#f8f9fb"]
+        ],
+        dark: [
+          ["Background", "#0d1116", "#e8eef4"],
+          ["Surface", "#151b22", "#e8eef4"],
+          ["Text", "#e8eef4", "#0d1116"],
+          ["Muted text", "#a8b4c0", "#0d1116"],
+          ["Border", "#4a5c6e", "#e8eef4"],
+          ["Brand", "#b7d0e6", "#0d1116"],
+          ["Brand accent", "#9bb6cc", "#0d1116"]
+        ]
+      },
+      ledger: {
+        light: [
+          ["Background", "#f2f4f6", "#141a22"],
+          ["Surface", "#fbfcfd", "#141a22"],
+          ["Text", "#141a22", "#e7ecf1"],
+          ["Muted text", "#4d5864", "#e7ecf1"],
+          ["Border", "#9aa6b0", "#141a22"],
+          ["Brand", "#6e5a38", "#fbfcfd"],
+          ["Brand accent", "#7a6544", "#fbfcfd"]
+        ],
+        dark: [
+          ["Background", "#101318", "#e7ecf1"],
+          ["Surface", "#181c22", "#e7ecf1"],
+          ["Text", "#e7ecf1", "#101318"],
+          ["Muted text", "#aeb6c0", "#101318"],
+          ["Border", "#4c5664", "#e7ecf1"],
+          ["Brand", "#e0d0b4", "#101318"],
+          ["Brand accent", "#b6a68a", "#101318"]
+        ]
+      }
+    };
+
+    const STATUS = {
+      light: [
+        ["ok", "Inside budget", "#0d6b3c on #e5f6ec"],
+        ["warn", "Close to budget", "#7a5206 on #fbf3d4"],
+        ["over", "Over budget", "#a61b14 on #fdecea"]
+      ],
+      dark: [
+        ["ok", "Inside budget", "#8ed7ae on #10281c"],
+        ["warn", "Close to budget", "#f0d48a on #33280f"],
+        ["over", "Over budget", "#f5b2aa on #3a1816"]
+      ]
+    };
+
+    const ICONS = [
+      ["i-groceries", "Groceries"],
+      ["i-rent", "Rent"],
+      ["i-utilities", "Utilities"],
+      ["i-transport", "Transportation"],
+      ["i-entertainment", "Entertainment"],
+      ["i-dining", "Dining"],
+      ["i-healthcare", "Healthcare"],
+      ["i-shopping", "Shopping"],
+      ["i-subscriptions", "Subscriptions"],
+      ["i-salary", "Salary"],
+      ["i-investments", "Investments"],
+      ["i-other", "Other"],
+      ["i-home", "Home"],
+      ["i-transactions", "Transactions"],
+      ["i-insights", "Insights", true],
+      ["i-settings", "Settings"]
+    ];
+
+    function stripMarkup(titleSize, titleWeight) {
+      const size = titleSize ? ` style="font-size:${titleSize};letter-spacing:0"` : "";
+      const weight = titleWeight ? ` style="font-weight:${titleWeight}"` : "";
+      return `
+        <p class="label">Sample month, not live data</p>
+        <div class="strip">
+          <div class="month">
+            <div>
+              <p class="month-label"${size}${weight}>October 2026</p>
+              <p class="spent">Spent $2,184.00 of $3,200.00</p>
+            </div>
+            <span class="chip ok">Inside budget</span>
+          </div>
+          <div class="meter" aria-hidden="true"><span></span></div>
+          <div class="tx">
+            <svg data-slot="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#i-groceries"></use></svg>
+            <div class="tx-main">
+              <p class="tx-desc">Whole Foods Market, weekly groceries, produce, and household supplies for the apartment</p>
+              <p class="tx-meta">Oct 14, 2026, Groceries</p>
+            </div>
+            <p class="tx-amt">−$86.42</p>
+          </div>
+          <p class="insight"><span class="k">Insight</span><span>Dining is $40.00 under its $280.00 October budget.</span></p>
+        </div>`;
+    }
+
+    document.querySelectorAll(".theme").forEach((theme) => {
+      const palette = PALETTES[theme.id];
+      theme.querySelectorAll("[data-swatches]").forEach((node) => {
+        const rows = palette[node.dataset.swatches];
+        node.innerHTML = rows.map(([name, fill, ink]) =>
+          `<div class="swatch" style="background:${fill};color:${ink}"><b>${name}</b><span>${fill}</span></div>`
+        ).join("");
+      });
+      theme.querySelectorAll("[data-status]").forEach((node) => {
+        const rows = STATUS[node.dataset.status];
+        node.innerHTML = `<p class="label">Status</p>` + rows.map(([kind, name, hex]) =>
+          `<div class="chip-line"><span class="chip ${kind}">${name}</span><span class="hex">${hex}</span></div>`
+        ).join("");
+      });
+      theme.querySelectorAll("[data-strip]").forEach((node) => {
+        node.innerHTML = stripMarkup(node.dataset.titleSize || "", node.dataset.titleWeight || "");
+      });
+    });
+
+    document.querySelectorAll("[data-icons]").forEach((stage) => {
+      stage.innerHTML = ICONS.map(([id, label, selected]) =>
+        `<figure class="${selected ? "is-selected" : ""}"><svg data-slot="icon" viewBox="0 0 24 24" aria-hidden="true"><use href="#${id}"></use></svg><figcaption>${label}</figcaption></figure>`
+      ).join("");
+    });
+  </script>
+</body>
+</html>
