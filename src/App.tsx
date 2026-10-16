@@ -8,6 +8,7 @@ import CategoriesPage from './features/categories/CategoriesPage'
 import RecurringPage from './features/recurring/RecurringPage'
 import BreakdownPage from './features/breakdown/BreakdownPage'
 import SettingsPage from './features/settings/SettingsPage'
+import SuggestionsPage from './features/suggestions/SuggestionsPage'
 import Layout from './components/layout/Layout'
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="recurring" element={<RecurringPage />} />
             <Route path="breakdown" element={<BreakdownPage />} />
+            <Route path="suggestions" element={<SuggestionsPage />} />
             <Route path="settings" element={<SettingsPage />} />
           </Route>
           <Route path="/app" element={<Navigate to="/" replace />} />
