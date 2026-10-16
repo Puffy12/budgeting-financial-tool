@@ -1,6 +1,6 @@
 ---
 description: Frontend React/TypeScript conventions
-globs: frontend/**/*.{ts,tsx}
+globs: src/**/*.{ts,tsx}
 alwaysApply: false
 ---
 

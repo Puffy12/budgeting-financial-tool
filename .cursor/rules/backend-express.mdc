@@ -1,6 +1,6 @@
 ---
 description: Backend Express.js conventions
-globs: backend/**/*.js
+globs: server/**/*.js
 alwaysApply: false
 ---
 
@@ -16,10 +16,10 @@ Routes are mounted at `/api/users/:userId/` prefix:
 
 ## Database (JSON File Storage)
 
-Use `db` utilities from `../utils/db`:
+Use `db` utilities from `../db`:
 
 ```javascript
-const db = require('../utils/db');
+const db = require('../db');
 
 // Get all items for a user
 const items = db.getAll('transactions', userId);

@@ -7,8 +7,8 @@ alwaysApply: true
 
 ## Project Structure
 
-- `frontend/` - React 19 + TypeScript + Vite + TailwindCSS v4
-- `backend/` - Express.js with JSON file-based storage
+- `src/` - React 19 + TypeScript + Vite + TailwindCSS v4
+- `server/` - Express.js with JSON file-based storage
 - Root `package.json` - Scripts for running both together
 
 ## Running the App
@@ -56,18 +56,18 @@ icon: '🛒'
 icon: 'shopping-cart'
 ```
 
-Icon IDs are defined in `frontend/src/utils/categoryIcons.ts`. Use `getIconById()` to render.
+Icon IDs are defined in `src/lib/categoryIcons.ts`. Use `getIconById()` to render.
 
 ## Backend API Patterns
 
-- Routes in `backend/routes/` (users, categories, transactions, recurring)
-- Database utilities in `backend/utils/db.js`
-- User data stored in `backend/data/{userId}/`
+- Routes in `server/routes/` (users, categories, transactions, recurring)
+- Database utilities in `server/db/`
+- User data stored in `data/{userId}/`
 
 ## Frontend Patterns
 
-- Pages in `frontend/src/pages/`
-- API client in `frontend/src/api/index.ts`
-- Types in `frontend/src/types/index.ts`
+- Pages in `src/features/`
+- API client in `src/api/index.ts`
+- Types in `src/types/index.ts`
 - Use `useTheme()` for dark/light mode (`isDark` boolean)
 - Use `useUser()` for current user context
