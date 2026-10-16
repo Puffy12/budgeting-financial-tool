@@ -1,29 +1,59 @@
-/**
- * Deploy is stopped on purpose.
- *
- * backend/deploy.mjs deploys the directory it lives in. The remote app root
- * must contain server.js and package.json, and user data stays beside that
- * server.js in a data/ folder that the archive never uploads.
- *
- * This repository is now one package:
- * - the API entry is server/server.js, not a root server.js
- * - the installable package.json is the repo root and includes the client
- * - Vite writes dist/ at the repo root
- * - JSON storage is <repo>/data, resolved from server/db as ../../data
- *
- * Archiving the repo root, or archiving server/ alone, would not match that
- * remote contract. A new archive layout is a deploy decision and is not guessed here.
- */
-console.error('npm run deploy is stopped. The previous deploy script cannot package this layout.')
-console.error('')
-console.error('backend/deploy.mjs conflict:')
-console.error('  1. It builds ../frontend and copies frontend/dist into its own dist/.')
-console.error('  2. It archives its own directory. The remote check requires server.js and package.json at myproject/.')
-console.error('  3. The remote install is npm install --omit=dev against that backend-only package.json.')
-console.error('  4. Production data lived beside server.js and was excluded from the archive.')
-console.error('     Local data is now <repo>/data. server/db resolves ../../data from server/db.')
-console.error('     If server.js is no longer the deployed project root, that relative path misses production data.')
-console.error('  5. OpalStack starts the app with an external bash start that this repo does not own.')
-console.error('')
-console.error('No files were uploaded. Ask Mike how the remote root should look before changing deploy.')
-process.exit(1)
+import fs from 'node:fs';
+import path from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { root, appDir, liveDir, backupRoot, connect, execute, quote } from './deployment/connection.mjs';
+import { createArchive } from './deployment/archive.mjs';
+import { prepareBackup } from './deployment/backup-production.mjs';
+import { stage } from './deployment/stage.mjs';
+
+const flags = new Set(process.argv.slice(2));
+const allowed = new Set(['--build', '--no-build', '--check-env', '--backup-only']);
+for (const flag of flags) {
+  if (!allowed.has(flag)) throw new Error(`Unsupported flag: ${flag}. Data reset is not supported.`);
+}
+const publicUrl = process.env.LIVE_PUBLIC_URL || 'https://budget-tool.advran.opalstacked.com';
+if (new URL(publicUrl).protocol !== 'https:') throw new Error('Public verification requires HTTPS');
+if (flags.has('--check-env')) {
+  console.log(JSON.stringify({ project: liveDir, backupRoot, publicUrl, runtimeEnvironment: 'preserve server .env' }));
+  process.exit(0);
+}
+const release = new Date().toISOString().replaceAll(':', '-');
+const local = path.join(root, '.deploy-tmp', release);
+fs.mkdirSync(local, { recursive: true, mode: 0o700 });
+if (!flags.has('--backup-only') && !flags.has('--no-build')) {
+  execFileSync('npm', ['run', 'build'], { cwd: root, stdio: 'inherit' });
+}
+const archive = path.join(local, 'release.tar.gz');
+const artifact = flags.has('--backup-only') ? null : createArchive(root, archive, release);
+const client = await connect();
+const lock = `${appDir}/.budget-deploy-lock`;
+let locked = false;
+let releaseLock = true;
+try {
+  await execute(client, `umask 077\nmkdir ${quote(lock)}`);
+  locked = true;
+  const prepared = await prepareBackup(client, release);
+  console.log('Verified production backup:', JSON.stringify(prepared.summary));
+  if (!flags.has('--backup-only')) {
+    console.log('Installing and checking the staged release while production serves.');
+    const preflight = await stage(client, prepared.work, archive, artifact.sha256, release, publicUrl);
+    const finalBackup = `${backupRoot}/${release}-cutover`;
+    console.log('Staging passed. Taking a final stopped-app snapshot and switching code.');
+    releaseLock = false; // A lost connection must leave the lock until remote recovery is checked.
+    const result = await execute(client, `bash ${quote(`${prepared.work}/cutover.sh`)} ${quote(appDir)} ${quote(prepared.work)} ${quote(finalBackup)} ${quote(release)} ${quote(publicUrl)} ${quote(preflight.port)}`);
+    releaseLock = true;
+    console.log(result);
+    const receipt = { release, publicUrl, backup: finalBackup, previousCode: `${prepared.work}/previous`, sha256: artifact.sha256 };
+    fs.writeFileSync(path.join(local, 'receipt.json'), JSON.stringify(receipt, null, 2));
+    console.log('Deployment verified:', JSON.stringify(receipt));
+  }
+} catch (error) {
+  if (error.message.includes('Previous release restored and healthy.')) releaseLock = true;
+  console.error(error.message);
+  process.exitCode = 1;
+} finally {
+  if (locked && releaseLock) {
+    await execute(client, `rmdir ${quote(lock)}`).catch(() => console.error('Deploy lock remains; inspect server before retrying.'));
+  } else if (locked) console.error('Deploy outcome requires inspection; retained the remote deploy lock.');
+  client.end();
+}
