@@ -1,5 +1,6 @@
 #Database
-backend/data/
+data/
+legacy/backend/data/
 
 # Dependencies
 node_modules/
@@ -38,4 +39,5 @@ coverage/
 
 # Misc
 *.tsbuildinfo
-backend/.deploy-tmp/deploy.zip
+legacy/backend/.deploy-tmp/deploy.zip
+.deploy-tmp/
