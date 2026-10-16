@@ -29,7 +29,9 @@ These are unconfirmed. Use them only as labeled proposals. Do not treat them as 
 - Yellow starts at 80% of the budget. That percent is a working proposal.
 - The first budget slice has one required monthly total. Per-category caps are optional. Whether those caps ship in the first slice is a working proposal.
 
-Also not decided, so leave them unimplemented until Mike answers:
+The Suggestions page is an experiment. It stores one monthly total, colors it with the 80% proposal, compares that total with expenses, lists the largest expenses and categories in the months on screen, and projects next month as the average of those months. Those formulas are still open. Do not treat the experiment as the decision.
+
+Also not decided:
 
 - What the monthly budget is compared with (expenses only, or income against expenses).
 - What "major spender" groups by.
