@@ -13,7 +13,8 @@
     "preview": "vite preview",
     "check:lines": "node scripts/check-file-lines.mjs",
     "deploy": "node scripts/deploy.mjs --build",
-    "deploy:reset": "node scripts/deploy.mjs --build --reset"
+    "backup:production": "node scripts/deploy.mjs --backup-only",
+    "test:deployment": "node --test scripts/deployment/*.test.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.20",
