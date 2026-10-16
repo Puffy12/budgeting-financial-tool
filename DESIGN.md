@@ -45,6 +45,16 @@ Where yellow starts is still the open 80% proposal in `PRODUCT.md`.
 - Amounts stay in the text color, with a plus or minus. Green is reserved for inside budget
 - Icons stay Lucide ids, stroke 1.75, ink colored. The selected nav item uses brand
 
+## Components
+
+### Brand mark and icon assets
+
+The abstract financial mark is two complementary hooks separated by open negative space. Use the existing platinum (`#f7fbff`) and cyan (`#8eebff`) on steel (`#1a456e`), with flat fills and no bevel, glow, or bounce on the mark. The established Precise instrument system above remains unchanged.
+
+- `public/favicon.svg` is the shared master for the browser icon and all in-app marks through `src/components/BrandMark.tsx`. Preserve its proportions and negative space at every size.
+- `public/favicon-32.png` is the 32px browser fallback. `public/apple-touch-icon.png` is the opaque 180px Apple touch icon. Keep both derived from the same mark and the links in `index.html` aligned.
+- The in-app mark is decorative alongside its visible product name; keep its empty alternative text and hidden accessibility state.
+
 ## Do not
 
 - Do not return to parchment, carbon black, Inter, or the emerald brand (`#10b981`)
