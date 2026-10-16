@@ -92,8 +92,8 @@ html.dark .panel {
     inset 0 1px 0 rgba(216, 247, 255, 0.28);
 }
 
-html.dark .brand-mark {
-  filter: drop-shadow(0 8px 12px rgba(62, 210, 255, 0.55));
+.brand-mark {
+  border-radius: 25%;
 }
 
 html.dark .btn-premium,
