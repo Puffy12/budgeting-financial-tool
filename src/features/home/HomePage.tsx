@@ -1,4 +1,4 @@
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { LogIn, Moon, Sun, UserPlus } from 'lucide-react'
 import { BrandMark } from '../../components/BrandMark'
 import { useTheme } from '../../context/ThemeContext'
@@ -14,6 +14,7 @@ export default function HomePage() {
   const session = useHomeSession()
   const { resolvedTheme, toggleTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
+  const reduceMotion = useReducedMotion()
 
   if (session.loading) {
     return (
@@ -38,21 +39,16 @@ export default function HomePage() {
       </button>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={reduceMotion ? false : { opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         className="w-full max-w-md"
       >
         <div className="mb-8 flex flex-col items-center">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ type: 'spring', delay: 0.1, stiffness: 200, damping: 20 }}
-            className="mb-5"
-          >
-            <BrandMark size={80} />
-          </motion.div>
-          <h1 className={`text-3xl font-bold tracking-tight text-[var(--text)]`}>
+          <div className="mb-5">
+            <BrandMark size={72} />
+          </div>
+          <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] text-[var(--text)]">
             Budget Tracker
           </h1>
           <p className={`mt-2 text-[var(--muted)]`}>
