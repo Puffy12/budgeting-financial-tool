@@ -93,3 +93,39 @@ Never log a PIN, a pin hash, a token, `PIN_AUTH_SECRET`, or a full auth body.
 Log a short operational reason. Leave secrets and full transaction exports out of logs.
 
 Import accepts `merge` or `replace` for that user only. `replace` overwrites that user's collections. Do not point an import at another user's directory.
+
+## Production deployment and backups
+
+The Opalstack project is `/home/advran/apps/budgeting-financial-tool/myproject`.
+Its original `data/`, `.env`, and `storage/` remain in place during deployment.
+The new `server/` and existing `data/` are siblings. Opalstack's launcher runs
+`npm start`, which now runs `node server/server.js` from this project root.
+The laptop's `data/` is a separate development copy and is never uploaded.
+
+- `npm run backup:production` makes and verifies a production backup without restarting.
+- `node scripts/deploy.mjs --check-env` checks local deployment configuration without connecting.
+- `npm run test:deployment` checks archive exclusions, exact backups, and rollback using disposable fixtures.
+- `npm run deploy` builds, backs up, stages dependencies while the old app serves, then switches code.
+
+Backups live outside the app under `/home/advran/backups/budgeting-financial-tool/`.
+Each timestamped backup contains `data/`, the unchanged `.env`, startup scripts,
+and a manifest of file hashes, counts, and a recent date/amount. A second backup
+is taken with the app stopped immediately before cutover. A busy or malformed
+source aborts backup verification; incomplete copies remain for inspection.
+
+The archive contains only `server/`, `dist/`, `package.json`, and `package-lock.json`.
+It excludes environment files, data, storage, dependencies, and the legacy tree.
+Dependencies are installed in staging; previous code and dependencies are retained
+under the app's `.deploy/<release>/previous/`. There is no reset flag.
+
+Verification compares every data file and `.env` with the final backup, checks
+all users' records through authenticated reads, checks ownership rejection, and
+checks the release marker and frontend route through public HTTPS. The API probe
+uses short-lived signed tokens on the server; it does not know or change any PIN.
+Actual browser PIN entry remains a separate user check.
+
+Failure during cutover restores the previous code and dependencies automatically.
+It never restores an older data snapshot over subsequent user writes. If automatic
+recovery reports a failure, inspect the retained release, stop/start scripts, and
+listener before retrying. Keep the deploy lock until recovery is understood.
+Successful deployment receipts are saved locally under ignored `.deploy-tmp/`.
