@@ -3,6 +3,7 @@ import type { AuthenticatedUser, User } from '../types'
 const AUTH_TOKENS_KEY = 'auth_tokens'
 const KNOWN_USERS_KEY = 'known_users'
 const CACHED_USERS_KEY = 'cached_users'
+const CURRENT_USER_KEY = 'currentUserId'
 
 export interface KnownUser {
   id: string
@@ -139,4 +140,25 @@ export function restoreAuthSync(): {
 
 export function readCachedUser(userId: string): User | undefined {
   return getCachedUsers()[userId]
+}
+
+export function readCurrentUserId(): string | null {
+  try {
+    return localStorage.getItem(CURRENT_USER_KEY)
+  } catch {
+    return null
+  }
+}
+
+export function saveCurrentUserId(userId: string | null) {
+  try {
+    if (userId) localStorage.setItem(CURRENT_USER_KEY, userId)
+    else localStorage.removeItem(CURRENT_USER_KEY)
+  } catch {
+    // Storage is blocked.
+  }
+}
+
+export function hasStoredSignIn(): boolean {
+  return Object.keys(getStoredTokens()).length > 0 || getKnownUsers().some((entry) => entry.pin)
 }
