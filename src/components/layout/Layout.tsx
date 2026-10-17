@@ -9,7 +9,7 @@ import { DesktopSidebar } from './DesktopSidebar'
 import { MobileNav } from './MobileNav'
 
 export default function Layout() {
-  const { currentUser, setCurrentUser, authenticatedUsers, logout } = useUser()
+  const { currentUser, setCurrentUser, switchUser: openUser, authenticatedUsers, logout } = useUser()
   const { resolvedTheme } = useTheme()
   const navigate = useNavigate()
   const { userId } = useParams<{ userId: string }>()
@@ -21,12 +21,11 @@ export default function Layout() {
       navigate('/')
       return
     }
-    if (!currentUser || currentUser.id !== userId) {
-      const found = authenticatedUsers.find((entry) => entry.user.id === userId)
-      if (found) setCurrentUser(found.user)
-      else navigate('/')
-    }
-  }, [userId, authenticatedUsers, currentUser, setCurrentUser, navigate])
+    if (currentUser?.id === userId) return
+    const found = authenticatedUsers.find((entry) => entry.user.id === userId)
+    if (found) openUser(userId)
+    else navigate('/', { replace: true })
+  }, [userId, authenticatedUsers, currentUser, openUser, navigate])
 
   const signedIn = userId
     ? authenticatedUsers.find((entry) => entry.user.id === userId)
