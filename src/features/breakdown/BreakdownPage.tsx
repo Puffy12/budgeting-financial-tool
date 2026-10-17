@@ -1,12 +1,12 @@
 import { ArcElement, BarElement, CategoryScale, Chart as ChartJS, Legend, LinearScale, Title, Tooltip } from 'chart.js'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
 import { renderCategoryIcon } from '../../components/CategoryGlyph'
 import { buildBreakdownCharts, pieColors } from './breakdownCharts'
 import { BreakdownCharts } from './components/BreakdownCharts'
 import { CategoryBreakdownTable, MonthlyBreakdownTable } from './components/BreakdownTables'
 import { MenuSelect } from '../../components/ui/Select'
-import { rangeFromMonths } from './breakdownLinks'
+import { categorySpendPath, monthBreakdownPath, rangeFromMonths } from './breakdownLinks'
 import { useBreakdownPage } from './hooks/useBreakdownPage'
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend)
@@ -17,6 +17,7 @@ const formatCurrency = (amount: number) => new Intl.NumberFormat('en-US', {
 
 export default function BreakdownPage() {
   const { userId = '' } = useParams()
+  const navigate = useNavigate()
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const page = useBreakdownPage()
@@ -48,7 +49,7 @@ export default function BreakdownPage() {
             <Summary label="Net Savings" value={formatCurrency(totalDifference)} note={`Rate: ${totalIncome > 0 ? ((totalDifference / totalIncome) * 100).toFixed(0) : 0}%`} tone={totalDifference >= 0 ? 'income' : 'expense'} isDark={isDark} plain />
             <Summary label="Transactions" value={String(txCount)} note={`Avg: ${Math.round(txCount / Math.max(page.monthlyData.length, 1))}/mo`} tone="plain" isDark={isDark} plain />
           </div>
-          <BreakdownCharts barChartData={charts.barChartData} barChartOptions={charts.barChartOptions} doughnutData={charts.doughnutData} doughnutOptions={charts.doughnutOptions} sortedCategories={charts.sortedCategories} />
+          <BreakdownCharts barChartData={charts.barChartData} barChartOptions={charts.barChartOptions} doughnutData={charts.doughnutData} doughnutOptions={charts.doughnutOptions} sortedCategories={charts.sortedCategories} onMonth={(index) => { const month = page.monthlyData[index]; if (month) navigate(monthBreakdownPath(userId, month.fullDate)) }} onCategory={(name) => { const category = page.categories.find((item) => item.name === name); const range = rangeFromMonths(page.monthlyData); if (category) navigate(categorySpendPath(userId, category.id, range.from, range.to)) }} />
           <MonthlyBreakdownTable isDark={isDark} userId={userId} range={rangeFromMonths(page.monthlyData)} monthlyData={page.monthlyData} totalIncome={totalIncome} totalExpenses={totalExpenses} totalDifference={totalDifference} formatCurrency={formatCurrency} sortedCategories={charts.sortedCategories} categories={page.categories} pieColors={pieColors} renderCategoryIcon={renderCategoryIcon} />
           <CategoryBreakdownTable isDark={isDark} userId={userId} range={rangeFromMonths(page.monthlyData)} monthlyData={page.monthlyData} totalIncome={totalIncome} totalExpenses={totalExpenses} totalDifference={totalDifference} formatCurrency={formatCurrency} sortedCategories={charts.sortedCategories} categories={page.categories} pieColors={pieColors} renderCategoryIcon={renderCategoryIcon} />
         </>
