@@ -134,3 +134,19 @@ It never restores an older data snapshot over subsequent user writes. If automat
 recovery reports a failure, inspect the retained release, stop/start scripts, and
 listener before retrying. Keep the deploy lock until recovery is understood.
 Successful deployment receipts are saved locally under ignored `.deploy-tmp/`.
+
+### GitHub Actions
+
+`.github/workflows/deploy.yml` runs the existing deployment on every push to
+`main`, including documentation changes, and supports manual dispatch.
+Deployments share one concurrency group and do not cancel an active cutover.
+The runner uses Node 22, installs locked dependencies, runs the deployment
+safeguard tests, validates configuration, and calls `npm run deploy`.
+
+Repository secret `ENV_FILE` holds the multiline local deployment configuration.
+Its reviewed keys are `OPALSTACK_HOST`, `OPALSTACK_USER`, `OPALSTACK_PASSWORD`,
+`OPALSTACK_PORT` (SSH port), `APP_NAME`, `OPALSTACK_REMOTE_PATH`, and
+`OPALSTACK_PROJECT_DIR`. Review any new keys before refreshing the secret.
+The runner writes `.env` with restricted permissions and removes it even on
+failure. Production's existing `.env` and user data remain on the server.
+The workflow becomes active only after it is pushed to GitHub.
