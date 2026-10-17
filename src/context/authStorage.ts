@@ -10,30 +10,57 @@ export interface KnownUser {
   pin?: string
 }
 
-export function getStoredTokens(): Record<string, string> {
+// The sign-in check reads these before anything renders, so a damaged entry reads as empty instead of
+// crashing the app, and a blocked write keeps the sign-in for this visit only.
+function readJson(key: string): unknown {
   try {
-    const raw = localStorage.getItem(AUTH_TOKENS_KEY)
-    return raw ? JSON.parse(raw) : {}
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : null
   } catch {
-    return {}
+    return null
   }
+}
+
+function writeJson(key: string, value: unknown) {
+  try {
+    localStorage.setItem(key, JSON.stringify(value))
+  } catch {
+    // Storage is full or blocked.
+  }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function isCachedUser(value: unknown): value is User {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string'
+}
+
+function isKnownUser(value: unknown): value is KnownUser {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string'
+    && (value.pin === undefined || typeof value.pin === 'string')
+}
+
+export function getStoredTokens(): Record<string, string> {
+  const stored = readJson(AUTH_TOKENS_KEY)
+  if (!isRecord(stored)) return {}
+  return Object.fromEntries(
+    Object.entries(stored).filter((entry): entry is [string, string] => typeof entry[1] === 'string'),
+  )
 }
 
 export function saveTokens(tokens: Record<string, string>) {
-  localStorage.setItem(AUTH_TOKENS_KEY, JSON.stringify(tokens))
+  writeJson(AUTH_TOKENS_KEY, tokens)
 }
 
 export function getKnownUsers(): KnownUser[] {
-  try {
-    const raw = localStorage.getItem(KNOWN_USERS_KEY)
-    return raw ? JSON.parse(raw) : []
-  } catch {
-    return []
-  }
+  const stored = readJson(KNOWN_USERS_KEY)
+  return Array.isArray(stored) ? stored.filter(isKnownUser) : []
 }
 
 export function saveKnownUsers(users: KnownUser[]) {
-  localStorage.setItem(KNOWN_USERS_KEY, JSON.stringify(users))
+  writeJson(KNOWN_USERS_KEY, users)
 }
 
 export function addKnownUser(user: { id: string; name: string; pin?: string }) {
@@ -50,16 +77,15 @@ export function addKnownUser(user: { id: string; name: string; pin?: string }) {
 }
 
 function getCachedUsers(): Record<string, User> {
-  try {
-    const raw = localStorage.getItem(CACHED_USERS_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
+  const stored = readJson(CACHED_USERS_KEY)
+  if (!isRecord(stored)) return {}
+  return Object.fromEntries(
+    Object.entries(stored).filter((entry): entry is [string, User] => isCachedUser(entry[1])),
+  )
 }
 
 function saveCachedUsers(users: Record<string, User>) {
-  localStorage.setItem(CACHED_USERS_KEY, JSON.stringify(users))
+  writeJson(CACHED_USERS_KEY, users)
 }
 
 export function cacheUser(user: User) {
