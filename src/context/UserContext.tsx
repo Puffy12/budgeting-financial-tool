@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import type { AuthenticatedUser, User } from '../types'
 import { Spinner } from '../components/ui/Spinner'
-import { UNAUTHORIZED_EVENT, setApiToken } from '../lib/apiClient'
+import { UNAUTHORIZED_EVENT, getApiToken, rejectedToken, setApiToken } from '../lib/apiClient'
 import { useAuthActions } from './useAuthActions'
 import { getKnownUsers, getStoredTokens, hasStoredSignIn, saveCurrentUserId, saveTokens, type KnownUser } from './authStorage'
 import { restoreSession } from './restoreSession'
@@ -57,18 +57,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [])
 
   useEffect(() => {
-    const handler = () => {
-      if (!currentUser) return
-      const targetId = currentUser.id
+    const revoke = (event: Event) => {
+      const token = rejectedToken(event)
+      if (!token) return
       const tokens = getStoredTokens()
-      delete tokens[targetId]
+      for (const [userId, stored] of Object.entries(tokens)) {
+        if (stored === token) delete tokens[userId]
+      }
       saveTokens(tokens)
-      setAuthenticatedUsers((prev) => prev.filter((entry) => entry.user.id !== targetId))
-      selectUser(null, null)
+      setAuthenticatedUsers((prev) => prev.filter((entry) => entry.token !== token))
+      if (getApiToken() === token) selectUser(null, null)
     }
-    window.addEventListener(UNAUTHORIZED_EVENT, handler)
-    return () => window.removeEventListener(UNAUTHORIZED_EVENT, handler)
-  }, [currentUser, selectUser])
+    window.addEventListener(UNAUTHORIZED_EVENT, revoke)
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, revoke)
+  }, [selectUser])
 
   const switchUser = useCallback((userId: string) => {
     const found = authenticatedUsers.find((entry) => entry.user.id === userId)
