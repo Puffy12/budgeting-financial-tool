@@ -84,7 +84,9 @@ Migrate existing JSON into SQLite without changing date strings, amounts, ids, o
 
 The PIN stays on the server. The legacy auth route hashes it with bcrypt (cost 12) and stores `pinHash` on the user record. The login schema requires exactly four digits. Responses strip `pinHash`.
 
-The session token is an HMAC built in `server/auth/pinToken.js` (parked original: `legacy/backend/auth/pinToken.js`) from the user id, an expiry, and `PIN_AUTH_SECRET`. The legacy TTL is 14 days. If `PIN_AUTH_SECRET` is missing, the process generates a random secret and existing tokens die on restart. Set the secret in the server environment when tokens should survive a restart.
+The session token is an HMAC built in `server/auth/pinToken.js` (parked original: `legacy/backend/auth/pinToken.js`) from the user id, an expiry, and `PIN_AUTH_SECRET`. A token lasts 365 days. The parked original used 14. `server/auth/pinToken.test.js` covers the expiry, changed tokens, and malformed tokens. If `PIN_AUTH_SECRET` is missing, the process generates a random secret and existing tokens die on restart. Set the secret in the server environment when tokens should survive a restart.
+
+The client checks the stored sign-in once, when the app opens, before any page renders (`src/context/restoreSession.ts`). Only a 401 or 403 ends a sign-in. A network failure, a timeout, or a server error keeps an unexpired token and the cached user. When the server refuses a token, the client signs in again with the PIN saved on the device, if one is saved. A 401 clears only the token that request carried, so a request sent without a token cannot sign anyone out. The client attaches the token in the same step that selects the user, because pages load data in effects that run before the provider's effects.
 
 Never log a PIN, a pin hash, a token, `PIN_AUTH_SECRET`, or a full auth body.
 
