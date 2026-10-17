@@ -33,12 +33,13 @@ function validatePinToken(token) {
   // Check expiry
   if (Date.now() > expiryMs) return null;
 
+  // timingSafeEqual throws on unequal lengths, which non-hex text produces.
+  if (!/^[0-9a-f]{64}$/.test(providedHmac)) return null;
+
   const payload = `${userId}:${expiryStr}`;
   const expectedHmac = crypto.createHmac('sha256', PIN_AUTH_SECRET)
     .update(payload)
     .digest('hex');
-
-  if (providedHmac.length !== expectedHmac.length) return null;
 
   const isValid = crypto.timingSafeEqual(
     Buffer.from(providedHmac, 'hex'),
