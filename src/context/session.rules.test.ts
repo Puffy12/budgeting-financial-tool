@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import type { User } from '../types'
-import { failedCheck, isTokenExpired, keepsToken, signedInUser } from './session.rules.ts'
+import { failedCheck, isTokenExpired, keepsToken, readDeviceSession, signedInUser } from './session.rules.ts'
 
 const now = Date.UTC(2026, 9, 16, 12)
 const day = 24 * 60 * 60 * 1000
@@ -51,4 +51,15 @@ test('only a 401 or 403 counts as the server rejecting a token', () => {
   for (const status of [undefined, 400, 404, 429, 500, 502, 503]) {
     assert.deepEqual(failedCheck(status), { kind: 'unreachable' })
   }
+})
+
+test('a saved device sign-in opens only a well-formed user holding their own token', () => {
+  assert.deepEqual(readDeviceSession({ session: { user: fresh, token: live } }), { user: fresh, token: live })
+  const refused = [
+    null, 'u1', [], {}, { session: null }, { session: [] }, { session: { user: fresh } },
+    { session: { user: { id: 'u1' }, token: live } },
+    { session: { user: fresh, token: 42 } },
+    { session: { user: { ...fresh, id: 'u2' }, token: live } },
+  ]
+  for (const body of refused) assert.equal(readDeviceSession(body), null)
 })

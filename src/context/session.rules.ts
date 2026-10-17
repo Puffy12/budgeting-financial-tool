@@ -1,4 +1,4 @@
-import type { User } from '../types'
+import type { AuthenticatedUser, User } from '../types'
 
 export type TokenCheck =
   | { kind: 'confirmed'; user: User }
@@ -46,4 +46,12 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 // Only settings reads createdAt, and it guards for a missing value, so an id and a name make a usable user.
 export function isUserRecord(value: unknown): value is User {
   return isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string'
+}
+
+// The saved sign-in arrives from the network and can open an account, so the token must belong to the user it names.
+export function readDeviceSession(body: unknown): AuthenticatedUser | null {
+  if (!isRecord(body) || !isRecord(body.session)) return null
+  const { user, token } = body.session
+  if (!isUserRecord(user) || typeof token !== 'string' || !token.startsWith(`${user.id}:`)) return null
+  return { user, token }
 }
