@@ -32,4 +32,14 @@ export const authApi = {
       body: JSON.stringify({ currentPin, newPin }),
       headers: getApiToken() ? { Authorization: `Bearer ${getApiToken()}` } : {},
     }),
+
+  getDeviceSession: () => fetchApi<unknown>('/auth/device-session'),
+
+  rememberDevice: (token: string) =>
+    fetchApi<unknown>('/auth/device-session', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  forgetDevice: () => fetchApi<unknown>('/auth/device-session', { method: 'DELETE' }),
 }
