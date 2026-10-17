@@ -4,7 +4,7 @@
 **Priority:** High
 **What:** Set up Vitest and write unit tests for the 4 highest-risk backend modules:
 1. **Recurring processor** (`utils/recurringProcessor.js`) — test `calculateNextDueDate` across all 5 frequencies (weekly, biweekly, monthly, quarterly, yearly), including month-boundary edge cases (Jan 31 → Feb 28, leap years)
-2. **PIN auth** (`auth/pinToken.js`) — test token generation, validation, expiry after 14 days, timing-safe comparison, malformed token handling
+2. **PIN auth** (`auth/pinToken.js`) — done in `server/auth/pinToken.test.js` (node:test): generation, validation, the 365-day expiry, changed tokens, and malformed tokens
 3. **Stats calculations** (`routes/users.js` stats endpoints) — test monthly summaries with mixed income/expenses, recurring estimates per frequency, empty-month handling
 4. **Import/export** (`routes/export.js`) — test merge-mode category dedup (case-insensitive), replace mode, data integrity after round-trip export→import
 
