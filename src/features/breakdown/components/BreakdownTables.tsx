@@ -1,7 +1,22 @@
 import { motion } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import type { Category, MonthlyData } from '../../../types'
 import { categorySpendPath, monthBreakdownPath } from '../breakdownLinks'
+
+function pressable(href: string, navigate: (path: string) => void) {
+  return {
+    role: 'link' as const,
+    tabIndex: 0,
+    className: 'cursor-pointer transition-colors hover:bg-[var(--bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--brand)]',
+    onClick: () => navigate(href),
+    onKeyDown: (event: React.KeyboardEvent) => {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault()
+        navigate(href)
+      }
+    },
+  }
+}
 
 interface Props {
   isDark: boolean
@@ -20,6 +35,7 @@ interface Props {
 
 export function MonthlyBreakdownTable(props: Props) {
   const { isDark, monthlyData, totalIncome, totalExpenses, totalDifference, formatCurrency } = props
+  const navigate = useNavigate()
   return (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4, duration: 0.3 }}
             className={`card-hover panel`}>
@@ -63,8 +79,8 @@ export function MonthlyBreakdownTable(props: Props) {
                 </thead>
                 <tbody className={`divide-y divide-[var(--line)]`}>
                   {monthlyData.map((month) => (
-                    <tr key={month.fullDate} className={`transition-colors hover:bg-[var(--bg)]`}>
-                      <td className={`px-5 py-3.5 font-medium sm:px-6 text-[var(--text)]`}><Link to={monthBreakdownPath(props.userId, month.fullDate)} className="underline-offset-2 hover:underline">{month.month} {month.year}</Link></td>
+                    <tr key={month.fullDate} {...pressable(monthBreakdownPath(props.userId, month.fullDate), navigate)} aria-label={`${month.month} ${month.year}`}>
+                      <td className={`px-5 py-3.5 font-medium sm:px-6 text-[var(--text)]`}>{month.month} {month.year}</td>
                       <td className={`px-5 py-3.5 text-right money tabular-nums sm:px-6 ${isDark ? 'text-emerald-400' : 'text-emerald-600'}`}>{formatCurrency(month.income)}</td>
                       <td className={`px-5 py-3.5 text-right money tabular-nums sm:px-6 ${isDark ? 'text-red-400' : 'text-red-600'}`}>{formatCurrency(month.expenses)}</td>
                       <td className={`px-5 py-3.5 text-right font-medium money tabular-nums sm:px-6 ${month.difference >= 0 ? isDark ? 'text-emerald-400' : 'text-emerald-600' : isDark ? 'text-red-400' : 'text-red-600'}`}>
@@ -91,6 +107,7 @@ export function MonthlyBreakdownTable(props: Props) {
 
 export function CategoryBreakdownTable(props: Props) {
   const { sortedCategories, categories, pieColors, totalExpenses, formatCurrency, renderCategoryIcon } = props
+  const navigate = useNavigate()
   if (sortedCategories.length === 0) return null
   return (
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, duration: 0.3 }}
@@ -140,15 +157,16 @@ export function CategoryBreakdownTable(props: Props) {
                   <tbody className={`divide-y divide-[var(--line)]`}>
                     {sortedCategories.map(([name, amount], idx) => {
                       const category = categories.find(c => c.name === name)
+                      const href = category ? categorySpendPath(props.userId, category.id, props.range.from, props.range.to) : undefined
                       return (
-                        <tr key={name} className={`transition-colors hover:bg-[var(--bg)]`}>
+                        <tr key={name} {...(href ? pressable(href, navigate) : {})} aria-label={href ? name : undefined}>
                           <td className="px-5 py-3.5 sm:px-6">
                             <div className="flex items-center gap-3">
                               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: pieColors[idx % pieColors.length] }} />
                               <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--bg)]`}>
                                 {renderCategoryIcon(category?.icon, `h-4 w-4 text-[var(--muted)]`)}
                               </div>
-                              {category ? <Link to={categorySpendPath(props.userId, category.id, props.range.from, props.range.to)} className="font-medium text-[var(--text)] underline-offset-2 hover:underline">{name}</Link> : <span className="font-medium text-[var(--text)]">{name}</span>}
+                              <span className="font-medium text-[var(--text)]">{name}</span>
                             </div>
                           </td>
                           <td className={`px-5 py-3.5 text-right money tabular-nums sm:px-6 text-[var(--text)]`}>{formatCurrency(amount)}</td>
