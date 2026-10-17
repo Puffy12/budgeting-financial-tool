@@ -38,3 +38,12 @@ export function signedInUser(check: TokenCheck, token: string, cached: User | un
       return cached && !isTokenExpired(token, now) ? cached : null
   }
 }
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+// Only settings reads createdAt, and it guards for a missing value, so an id and a name make a usable user.
+export function isUserRecord(value: unknown): value is User {
+  return isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string'
+}

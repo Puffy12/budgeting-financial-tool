@@ -1,4 +1,5 @@
 import type { User } from '../types'
+import { isRecord, isUserRecord } from './session.rules'
 
 const AUTH_TOKENS_KEY = 'auth_tokens'
 const KNOWN_USERS_KEY = 'known_users'
@@ -28,14 +29,6 @@ function writeJson(key: string, value: unknown) {
   } catch {
     // Storage is full or blocked.
   }
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-}
-
-function isCachedUser(value: unknown): value is User {
-  return isRecord(value) && typeof value.id === 'string' && typeof value.name === 'string'
 }
 
 function isKnownUser(value: unknown): value is KnownUser {
@@ -81,7 +74,7 @@ function getCachedUsers(): Record<string, User> {
   const stored = readJson(CACHED_USERS_KEY)
   if (!isRecord(stored)) return {}
   return Object.fromEntries(
-    Object.entries(stored).filter((entry): entry is [string, User] => isCachedUser(entry[1])),
+    Object.entries(stored).filter((entry): entry is [string, User] => isUserRecord(entry[1])),
   )
 }
 
