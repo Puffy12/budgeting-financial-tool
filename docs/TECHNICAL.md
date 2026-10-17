@@ -13,6 +13,7 @@ The API is user-scoped. Legacy routes mount under `/api`, with user resources at
 | POST | `/api/auth/set-pin` | Set a PIN when the user has none |
 | POST | `/api/auth/validate-token` | Check a token |
 | PUT | `/api/auth/change-pin` | Change the PIN for the signed-in user |
+| GET, PUT, DELETE | `/api/auth/device-session` | Read, save, or clear the browser's backup sign-in cookie |
 | GET, PUT, DELETE | `/api/users/:userId` | That user's profile |
 | * | `/api/users/:userId/categories` | That user's categories |
 | * | `/api/users/:userId/transactions` | That user's transactions |
@@ -87,6 +88,8 @@ The PIN stays on the server. The legacy auth route hashes it with bcrypt (cost 1
 The session token is an HMAC built in `server/auth/pinToken.js` (parked original: `legacy/backend/auth/pinToken.js`) from the user id, an expiry, and `PIN_AUTH_SECRET`. A token lasts 365 days. The parked original used 14. `server/auth/pinToken.test.js` covers the expiry, changed tokens, and malformed tokens. If `PIN_AUTH_SECRET` is missing, the process generates a random secret and existing tokens die on restart. Set the secret in the server environment when tokens should survive a restart.
 
 The client checks the stored sign-in once, when the app opens, before any page renders (`src/context/restoreSession.ts`). Only a 401 or 403 ends a sign-in. A network failure, a timeout, or a server error keeps an unexpired token and the cached user. When the server refuses a token, the client signs in again with the PIN saved on the device, if one is saved. A 401 clears only the token that request carried, so a request sent without a token cannot sign anyone out. The client attaches the token in the same step that selects the user, because pages load data in effects that run before the provider's effects.
+
+Safari clears script storage after seven days of use without a visit. The server therefore keeps a copy of the open user's token in a cookie (`server/auth/deviceSession.js`). The cookie is HttpOnly and `SameSite=Strict`, and it expires with its token. In production it is `Secure` and named `__Host-budget_session`. The client saves the copy whenever a user opens and clears it when nobody is open. It reads the copy back only when its own storage holds no sign-in at all, so a browser that signed out stays signed out. The read checks the token like `validate-token` does, clears a refused copy, and sends `Cache-Control: no-store`.
 
 Never log a PIN, a pin hash, a token, `PIN_AUTH_SECRET`, or a full auth body.
 
