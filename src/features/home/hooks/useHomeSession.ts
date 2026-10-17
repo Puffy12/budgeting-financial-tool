@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useCallback, useRef, useState } from 'react'
 import { useUser } from '../../../context/UserContext'
 
 type Tab = 'login' | 'signup'
@@ -11,8 +10,7 @@ interface SetPinState {
 }
 
 export function useHomeSession() {
-  const { authenticatedUsers, knownUsers, login, signup, setPin, switchUser, removeKnownUser } = useUser()
-  const navigate = useNavigate()
+  const { currentUser, authenticatedUsers, knownUsers, login, signup, setPin, switchUser, removeKnownUser } = useUser()
   const [tab, setTab] = useState<Tab>('login')
   const [flow, setFlow] = useState<Flow>('main')
   const [setPinState, setSetPinState] = useState<SetPinState | null>(null)
@@ -24,19 +22,6 @@ export function useHomeSession() {
   const [submitting, setSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const usernameRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => {
-    if (authenticatedUsers.length > 0) {
-      const lastUserId = localStorage.getItem('currentUserId')
-      if (lastUserId) {
-        const found = authenticatedUsers.find((entry) => entry.user.id === lastUserId)
-        if (found) {
-          switchUser(lastUserId)
-          navigate(`/app/${lastUserId}`)
-        }
-      }
-    }
-  }, [authenticatedUsers, switchUser, navigate])
 
   const handleLogin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
@@ -50,15 +35,13 @@ export function useHomeSession() {
         setFlow('set-pin')
         setSetPinValue('')
         setConfirmSetPin('')
-      } else if (result.user) {
-        navigate(`/app/${result.user.id}`)
       }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Login failed')
     } finally {
       setSubmitting(false)
     }
-  }, [username, pin, login, navigate])
+  }, [username, pin, login])
 
   const handleSignup = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
@@ -70,14 +53,13 @@ export function useHomeSession() {
     setErrorMsg('')
     setSubmitting(true)
     try {
-      const user = await signup(username.trim(), pin)
-      navigate(`/app/${user.id}`)
+      await signup(username.trim(), pin)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to create account')
     } finally {
       setSubmitting(false)
     }
-  }, [username, pin, confirmPin, signup, navigate])
+  }, [username, pin, confirmPin, signup])
 
   const handleSetPin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
@@ -89,20 +71,18 @@ export function useHomeSession() {
     setErrorMsg('')
     setSubmitting(true)
     try {
-      const user = await setPin(setPinState.userId, setPinValue)
-      navigate(`/app/${user.id}`)
+      await setPin(setPinState.userId, setPinValue)
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Failed to set PIN')
     } finally {
       setSubmitting(false)
     }
-  }, [setPinState, setPinValue, confirmSetPin, setPin, navigate])
+  }, [setPinState, setPinValue, confirmSetPin, setPin])
 
   const handleQuickSwitch = async (userId: string, name: string) => {
     const authed = authenticatedUsers.find((entry) => entry.user.id === userId)
     if (authed) {
       switchUser(userId)
-      navigate(`/app/${userId}`)
       return
     }
     const known = knownUsers.find((entry) => entry.id === userId)
@@ -111,10 +91,7 @@ export function useHomeSession() {
       setSubmitting(true)
       try {
         const result = await login(known.name, known.pin)
-        if (result.user) {
-          navigate(`/app/${result.user.id}`)
-          return
-        }
+        if (result.user) return
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : 'Login failed')
       } finally {
@@ -144,7 +121,7 @@ export function useHomeSession() {
   }
 
   return {
-    authenticatedUsers, knownUsers, removeKnownUser, tab, setTab, flow, setPinState,
+    currentUser, authenticatedUsers, knownUsers, removeKnownUser, tab, setTab, flow, setPinState,
     username, setUsername, pin, setPin_, confirmPin, setConfirmPin, setPinValue, setSetPinValue,
     confirmSetPin, setConfirmSetPin, submitting, errorMsg, usernameRef, handleLogin, handleSignup,
     handleSetPin, handleQuickSwitch, resetForm, switchTab,

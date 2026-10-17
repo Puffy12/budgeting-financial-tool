@@ -1,5 +1,6 @@
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { LogIn, Moon, Sun, UserPlus } from 'lucide-react'
+import { Navigate } from 'react-router-dom'
 import { BrandMark } from '../../components/BrandMark'
 import { useTheme } from '../../context/ThemeContext'
 import { LoginForm } from './components/LoginForm'
@@ -15,6 +16,10 @@ export default function HomePage() {
   const { resolvedTheme, toggleTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const reduceMotion = useReducedMotion()
+
+  if (session.currentUser) {
+    return <Navigate to={`/app/${session.currentUser.id}`} replace />
+  }
 
   return (
     <div className={`flex min-h-screen flex-col items-center justify-center px-4 py-8 safe-area-top safe-area-bottom bg-[var(--bg)]`}>
