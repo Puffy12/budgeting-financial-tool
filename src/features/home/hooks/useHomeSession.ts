@@ -11,7 +11,7 @@ interface SetPinState {
 }
 
 export function useHomeSession() {
-  const { authenticatedUsers, knownUsers, loading, login, signup, setPin, switchUser, removeKnownUser } = useUser()
+  const { authenticatedUsers, knownUsers, login, signup, setPin, switchUser, removeKnownUser } = useUser()
   const navigate = useNavigate()
   const [tab, setTab] = useState<Tab>('login')
   const [flow, setFlow] = useState<Flow>('main')
@@ -26,7 +26,7 @@ export function useHomeSession() {
   const usernameRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!loading && authenticatedUsers.length > 0) {
+    if (authenticatedUsers.length > 0) {
       const lastUserId = localStorage.getItem('currentUserId')
       if (lastUserId) {
         const found = authenticatedUsers.find((entry) => entry.user.id === lastUserId)
@@ -36,7 +36,7 @@ export function useHomeSession() {
         }
       }
     }
-  }, [loading, authenticatedUsers, switchUser, navigate])
+  }, [authenticatedUsers, switchUser, navigate])
 
   const handleLogin = useCallback(async (event: React.FormEvent) => {
     event.preventDefault()
@@ -144,7 +144,7 @@ export function useHomeSession() {
   }
 
   return {
-    authenticatedUsers, knownUsers, loading, removeKnownUser, tab, setTab, flow, setPinState,
+    authenticatedUsers, knownUsers, removeKnownUser, tab, setTab, flow, setPinState,
     username, setUsername, pin, setPin_, confirmPin, setConfirmPin, setPinValue, setSetPinValue,
     confirmSetPin, setConfirmSetPin, submitting, errorMsg, usernameRef, handleLogin, handleSignup,
     handleSetPin, handleQuickSwitch, resetForm, switchTab,

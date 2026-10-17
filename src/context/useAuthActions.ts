@@ -3,7 +3,6 @@ import type { Dispatch, SetStateAction } from 'react'
 import type { AuthenticatedUser, User } from '../types'
 import { authApi } from '../features/home/api'
 import { usersApi } from '../features/dashboard/api'
-import { setApiToken } from '../lib/apiClient'
 import {
   addKnownUser,
   cacheUser,
@@ -17,7 +16,7 @@ import {
 
 interface AuthSetters {
   currentUser: User | null
-  setCurrentUser: Dispatch<SetStateAction<User | null>>
+  selectUser: (user: User | null, token: string | null) => void
   setAuthenticatedUsers: Dispatch<SetStateAction<AuthenticatedUser[]>>
   setKnownUsers: Dispatch<SetStateAction<KnownUser[]>>
   setError: Dispatch<SetStateAction<string | null>>
@@ -25,7 +24,7 @@ interface AuthSetters {
 
 export function useAuthActions({
   currentUser,
-  setCurrentUser,
+  selectUser,
   setAuthenticatedUsers,
   setKnownUsers,
   setError,
@@ -35,14 +34,13 @@ export function useAuthActions({
     tokens[user.id] = token
     saveTokens(tokens)
     cacheUser(user)
-    setApiToken(token)
     if (pin) setKnownUsers(addKnownUser({ ...user, pin }))
     setAuthenticatedUsers((prev) => {
       const filtered = prev.filter((entry) => entry.user.id !== user.id)
       return [...filtered, { user, token }]
     })
-    setCurrentUser(user)
-  }, [setAuthenticatedUsers, setCurrentUser, setKnownUsers])
+    selectUser(user, token)
+  }, [selectUser, setAuthenticatedUsers, setKnownUsers])
 
   const login = useCallback(async (name: string, pin: string) => {
     setError(null)
@@ -81,11 +79,8 @@ export function useAuthActions({
   const logout = useCallback((userId?: string) => {
     const targetId = userId || currentUser?.id
     if (!targetId) return
-    if (currentUser?.id === targetId) {
-      setCurrentUser(null)
-      setApiToken(null)
-    }
-  }, [currentUser, setCurrentUser])
+    if (currentUser?.id === targetId) selectUser(null, null)
+  }, [currentUser, selectUser])
 
   const removeKnownUser = useCallback((userId: string) => {
     const tokens = getStoredTokens()
@@ -96,11 +91,8 @@ export function useAuthActions({
     const updated = getKnownUsers().filter((entry) => entry.id !== userId)
     saveKnownUsers(updated)
     setKnownUsers(updated)
-    if (currentUser?.id === userId) {
-      setCurrentUser(null)
-      setApiToken(null)
-    }
-  }, [currentUser, setAuthenticatedUsers, setCurrentUser, setKnownUsers])
+    if (currentUser?.id === userId) selectUser(null, null)
+  }, [currentUser, selectUser, setAuthenticatedUsers, setKnownUsers])
 
   const deleteUser = useCallback(async (userId: string) => {
     await usersApi.delete(userId)

@@ -16,14 +16,6 @@ export default function HomePage() {
   const isDark = resolvedTheme === 'dark'
   const reduceMotion = useReducedMotion()
 
-  if (session.loading) {
-    return (
-      <div className={`flex min-h-screen items-center justify-center bg-[var(--bg)]`}>
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-      </div>
-    )
-  }
-
   return (
     <div className={`flex min-h-screen flex-col items-center justify-center px-4 py-8 safe-area-top safe-area-bottom bg-[var(--bg)]`}>
       <button

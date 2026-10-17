@@ -9,7 +9,7 @@ import { DesktopSidebar } from './DesktopSidebar'
 import { MobileNav } from './MobileNav'
 
 export default function Layout() {
-  const { currentUser, setCurrentUser, authenticatedUsers, loading, logout } = useUser()
+  const { currentUser, setCurrentUser, authenticatedUsers, logout } = useUser()
   const { resolvedTheme } = useTheme()
   const navigate = useNavigate()
   const { userId } = useParams<{ userId: string }>()
@@ -17,7 +17,6 @@ export default function Layout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
-    if (loading) return
     if (!userId) {
       navigate('/')
       return
@@ -27,19 +26,11 @@ export default function Layout() {
       if (found) setCurrentUser(found.user)
       else navigate('/')
     }
-  }, [userId, authenticatedUsers, loading, currentUser, setCurrentUser, navigate])
+  }, [userId, authenticatedUsers, currentUser, setCurrentUser, navigate])
 
   const signedIn = userId
     ? authenticatedUsers.find((entry) => entry.user.id === userId)
     : undefined
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[var(--bg)]">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-      </div>
-    )
-  }
 
   if (!signedIn || !userId) {
     return <Navigate to="/" replace />
