@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import { useTheme } from '../../context/ThemeContext'
 import { transactionsApi } from '../transactions/api'
 import type { Transaction } from '../../types'
 import { monthEnd } from './breakdownLinks'
+import { BackToBreakdown } from './components/BackToBreakdown'
 import { SpendList } from './components/SpendList'
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' })
@@ -44,7 +45,7 @@ export default function MonthBreakdownPage() {
 
   return (
     <div className="p-4 pb-24 lg:p-8 lg:pb-8">
-      <Link to={`/app/${userId}/breakdown`} className="text-sm font-medium text-[var(--muted)] underline-offset-2 hover:underline">Breakdown</Link>
+      <BackToBreakdown userId={userId} />
       <h1 className="mt-3 text-2xl font-bold tracking-tight text-[var(--text)]">{title}</h1>
       <p className="mt-1 text-[var(--muted)]">Every transaction in this month.</p>
       {loading ? <div className="mt-10 flex justify-center"><div className="h-10 w-10 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" /></div> : error ? <p className="mt-6 text-sm text-red-500">{error}</p> : (
