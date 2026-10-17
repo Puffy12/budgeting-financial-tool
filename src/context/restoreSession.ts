@@ -1,8 +1,10 @@
 import type { AuthenticatedUser } from '../types'
 import { authApi } from '../features/home/api'
 import { ApiError } from '../lib/apiClient'
-import { cacheUser, getKnownUsers, getStoredTokens, readCachedUser, readCurrentUserId, saveTokens } from './authStorage'
-import { failedCheck, keepsToken, signedInUser, type TokenCheck } from './session.rules'
+import {
+  addKnownUser, cacheUser, getKnownUsers, getStoredTokens, hasStoredSignIn, readCachedUser, readCurrentUserId, saveTokens,
+} from './authStorage'
+import { failedCheck, keepsToken, readDeviceSession, signedInUser, type TokenCheck } from './session.rules'
 
 // The app waits on this check, so a stalled request must not hold it behind the spinner.
 const CHECK_TIMEOUT_MS = 8000
@@ -11,6 +13,8 @@ export interface RestoredSession {
   authenticatedUsers: AuthenticatedUser[]
   current: AuthenticatedUser | null
 }
+
+const NO_SESSION: RestoredSession = { authenticatedUsers: [], current: null }
 
 function withTimeout<T>(request: Promise<T>): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -40,7 +44,23 @@ async function signInWithSavedPin(name: string, pin: string): Promise<Authentica
   }
 }
 
+// Safari clears this storage after seven days of use without a visit. The server keeps a cookie copy of
+// the open sign-in, read back only into empty storage, so a browser that signed out stays signed out.
+async function restoreFromDevice(): Promise<RestoredSession> {
+  try {
+    const session = readDeviceSession(await withTimeout(authApi.getDeviceSession()))
+    if (!session) return NO_SESSION
+    saveTokens({ [session.user.id]: session.token })
+    cacheUser(session.user)
+    addKnownUser({ id: session.user.id, name: session.user.name })
+    return { authenticatedUsers: [session], current: session }
+  } catch {
+    return NO_SESSION
+  }
+}
+
 export async function restoreSession(): Promise<RestoredSession> {
+  if (!hasStoredSignIn()) return restoreFromDevice()
   const lastUserId = readCurrentUserId()
   const now = Date.now()
   const kept: Record<string, string> = {}

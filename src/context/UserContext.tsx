@@ -4,7 +4,7 @@ import { Spinner } from '../components/ui/Spinner'
 import { UNAUTHORIZED_EVENT, getApiToken, rejectedToken, setApiToken } from '../lib/apiClient'
 import { authApi } from '../features/home/api'
 import { useAuthActions } from './useAuthActions'
-import { getKnownUsers, getStoredTokens, hasStoredSignIn, saveCurrentUserId, saveTokens, type KnownUser } from './authStorage'
+import { getKnownUsers, getStoredTokens, saveCurrentUserId, saveTokens, type KnownUser } from './authStorage'
 import { restoreSession } from './restoreSession'
 
 interface UserContextType {
@@ -29,7 +29,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUserState] = useState<User | null>(null)
   const [authenticatedUsers, setAuthenticatedUsers] = useState<AuthenticatedUser[]>([])
   const [knownUsers, setKnownUsers] = useState<KnownUser[]>(() => getKnownUsers())
-  const [checkingSignIn, setCheckingSignIn] = useState(hasStoredSignIn)
+  const [checkingSignIn, setCheckingSignIn] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   // Pages load data in effects that run before this provider's effects, so the token is attached
@@ -45,20 +45,21 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const actions = useAuthActions({ currentUser, selectUser, setAuthenticatedUsers, setKnownUsers, setError })
 
-  // The stored sign-in is checked once, when the app opens, before any page renders.
+  // The sign-in is checked once, when the app opens, before any page renders. Empty storage still
+  // waits for the check, because the server may hold the cookie copy.
   useEffect(() => {
-    if (!checkingSignIn) return
     let cancelled = false
     restoreSession()
       .catch(() => ({ authenticatedUsers: [], current: null }))
       .then((restored) => {
         if (cancelled) return
         setAuthenticatedUsers(restored.authenticatedUsers)
+        setKnownUsers(getKnownUsers())
         if (restored.current) selectUser(restored.current.user, restored.current.token)
         setCheckingSignIn(false)
       })
     return () => { cancelled = true }
-  }, [])
+  }, [selectUser])
 
   useEffect(() => {
     const revoke = (event: Event) => {
