@@ -1,10 +1,10 @@
 const crypto = require('crypto');
 
 const PIN_AUTH_SECRET = process.env.PIN_AUTH_SECRET || crypto.randomBytes(32).toString('hex');
-const TOKEN_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 days
+const TOKEN_TTL_MS = 365 * 24 * 60 * 60 * 1000; // 365 days
 
 /**
- * Generate a token for a user that expires in 14 days.
+ * Generate a token for a user that expires in 365 days.
  * Format: userId:expiryMs:hmac where hmac = sha256(userId:expiryMs + secret)
  */
 function generatePinToken(userId) {

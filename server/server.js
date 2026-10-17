@@ -9,7 +9,7 @@ const { app, port, hasFrontend, isProduction, devMode } = createApp();
 app.listen(port, '0.0.0.0', () => {
   const frontendStatus = hasFrontend ? 'Serving from /dist' : 'Not deployed';
   const modeStatus = isProduction ? 'Production' : 'Development';
-  const authStatus = devMode ? 'DISABLED (DEV_MODE)' : 'PIN Auth (14-day tokens)';
+  const authStatus = devMode ? 'DISABLED (DEV_MODE)' : 'PIN Auth (365-day tokens)';
   console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║              Budgeting App Server v1.0.0                      ║
