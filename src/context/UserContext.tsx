@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import type { AuthenticatedUser, User } from '../types'
 import { Spinner } from '../components/ui/Spinner'
 import { UNAUTHORIZED_EVENT, getApiToken, rejectedToken, setApiToken } from '../lib/apiClient'
+import { authApi } from '../features/home/api'
 import { useAuthActions } from './useAuthActions'
 import { getKnownUsers, getStoredTokens, hasStoredSignIn, saveCurrentUserId, saveTokens, type KnownUser } from './authStorage'
 import { restoreSession } from './restoreSession'
@@ -37,6 +38,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setApiToken(user ? token : null)
     saveCurrentUserId(user ? user.id : null)
     setCurrentUserState(user)
+    // The server's cookie copy follows whoever is open, so a cleared browser reopens only that person.
+    if (!user) authApi.forgetDevice().catch(() => {})
+    else if (token) authApi.rememberDevice(token).catch(() => {})
   }, [])
 
   const actions = useAuthActions({ currentUser, selectUser, setAuthenticatedUsers, setKnownUsers, setError })
