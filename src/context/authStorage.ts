@@ -1,4 +1,4 @@
-import type { AuthenticatedUser, User } from '../types'
+import type { User } from '../types'
 
 const AUTH_TOKENS_KEY = 'auth_tokens'
 const KNOWN_USERS_KEY = 'known_users'
@@ -99,43 +99,6 @@ export function removeCachedUser(userId: string) {
   const cached = getCachedUsers()
   delete cached[userId]
   saveCachedUsers(cached)
-}
-
-export function isTokenExpired(token: string): boolean {
-  const parts = token.split(':')
-  if (parts.length !== 3) return true
-  const expiryMs = Number(parts[1])
-  if (!Number.isFinite(expiryMs)) return true
-  return Date.now() > expiryMs
-}
-
-export function restoreAuthSync(): {
-  currentUser: User | null
-  authenticatedUsers: AuthenticatedUser[]
-  apiToken: string | null
-} {
-  const tokens = getStoredTokens()
-  const cachedUsers = getCachedUsers()
-  const lastUserId = localStorage.getItem('currentUserId')
-  const authenticatedUsers: AuthenticatedUser[] = []
-
-  for (const [userId, token] of Object.entries(tokens)) {
-    if (isTokenExpired(token)) continue
-    const user = cachedUsers[userId]
-    if (user) authenticatedUsers.push({ user, token })
-  }
-
-  let currentUser: User | null = null
-  let apiToken: string | null = null
-  if (lastUserId) {
-    const found = authenticatedUsers.find((entry) => entry.user.id === lastUserId)
-    if (found) {
-      currentUser = found.user
-      apiToken = found.token
-    }
-  }
-
-  return { currentUser, authenticatedUsers, apiToken }
 }
 
 export function readCachedUser(userId: string): User | undefined {
