@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Navigate, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Plus } from 'lucide-react'
@@ -15,15 +15,21 @@ export default function Layout() {
   const { userId } = useParams<{ userId: string }>()
   const [showQuickAdd, setShowQuickAdd] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  // Signing out or switching users clears the user one render before the route reaches Home.
+  // Once this layout has shown a user, a missing user means they left, so they are not reopened.
+  const showedUser = useRef(false)
 
   useEffect(() => {
     if (!userId) {
       navigate('/')
       return
     }
-    if (currentUser?.id === userId) return
+    if (currentUser?.id === userId) {
+      showedUser.current = true
+      return
+    }
     const found = authenticatedUsers.find((entry) => entry.user.id === userId)
-    if (found) openUser(userId)
+    if (found && (currentUser || !showedUser.current)) openUser(userId)
     else navigate('/', { replace: true })
   }, [userId, authenticatedUsers, currentUser, openUser, navigate])
 
